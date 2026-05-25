@@ -1,0 +1,114 @@
+import SwiftUI
+import MacCleanKit
+
+struct OptimizationView: View {
+    @State private var loginItems: [LoginItemsManager.LoginItem] = []
+    @State private var launchAgents: [LaunchAgentsManager.LaunchAgent] = []
+    @State private var selectedTab = 0
+
+    private let loginManager = LoginItemsManager()
+    private let agentManager = LaunchAgentsManager()
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Optimization")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundStyle(.white)
+                    Text("Manage startup items and background processes")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.white.opacity(0.7))
+                }
+                Spacer()
+            }
+            .padding(20)
+
+            // Tab selector
+            Picker("Section", selection: $selectedTab) {
+                Text("Login Items").tag(0)
+                Text("Launch Agents").tag(1)
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 20)
+            .padding(.bottom, 12)
+
+            // Content
+            Group {
+                if selectedTab == 0 {
+                    loginItemsList
+                } else {
+                    launchAgentsList
+                }
+            }
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .padding(.horizontal, 20)
+            .padding(.bottom, 20)
+        }
+        .onAppear { refresh() }
+    }
+
+    private var loginItemsList: some View {
+        List {
+            ForEach(loginItems, id: \.id) { item in
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text(item.name)
+                            .font(.system(size: 13, weight: .medium))
+                        if let bid = item.bundleIdentifier {
+                            Text(bid)
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
+                        }
+                    }
+                    Spacer()
+                    Toggle("", isOn: Binding(
+                        get: { item.isEnabled },
+                        set: { newVal in
+                            try? loginManager.toggleItem(item, enabled: newVal)
+                            refresh()
+                        }
+                    ))
+                    .toggleStyle(.switch)
+                }
+            }
+        }
+        .listStyle(.inset)
+    }
+
+    private var launchAgentsList: some View {
+        List {
+            ForEach(launchAgents, id: \.id) { agent in
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text(agent.label)
+                            .font(.system(size: 13, weight: .medium))
+                        if let program = agent.program {
+                            Text(program)
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
+                                .lineLimit(1)
+                        }
+                    }
+                    Spacer()
+                    if agent.isSystem {
+                        Text("System")
+                            .font(.caption2)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(.orange.opacity(0.2))
+                            .clipShape(Capsule())
+                    }
+                }
+            }
+        }
+        .listStyle(.inset)
+    }
+
+    private func refresh() {
+        loginItems = loginManager.getLoginItems()
+        launchAgents = agentManager.getLaunchAgents()
+    }
+}

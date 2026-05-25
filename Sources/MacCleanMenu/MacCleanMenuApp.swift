@@ -4,12 +4,14 @@ import MacCleanKit
 @main
 struct MacCleanMenuApp: App {
     @State private var statsCollector = SystemStatsCollector()
+    @State private var networkMonitor = NetworkSpeedMonitor()
     @State private var stats: SystemStatsCollector.SystemStats?
+    @State private var networkSpeed: NetworkSpeedMonitor.NetworkSpeed?
     @State private var timer: Timer?
 
     var body: some Scene {
         MenuBarExtra {
-            MenuContentView(stats: stats)
+            MenuContentView(stats: stats, networkSpeed: networkSpeed)
                 .onAppear { startPolling() }
                 .onDisappear { stopPolling() }
         } label: {
@@ -25,9 +27,15 @@ struct MacCleanMenuApp: App {
     }
 
     private func startPolling() {
-        Task { stats = await statsCollector.collect() }
+        Task {
+            stats = await statsCollector.collect()
+            networkSpeed = await networkMonitor.measure()
+        }
         timer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { _ in
-            Task { stats = await statsCollector.collect() }
+            Task {
+                stats = await statsCollector.collect()
+                networkSpeed = await networkMonitor.measure()
+            }
         }
     }
 
@@ -39,6 +47,7 @@ struct MacCleanMenuApp: App {
 
 struct MenuContentView: View {
     let stats: SystemStatsCollector.SystemStats?
+    let networkSpeed: NetworkSpeedMonitor.NetworkSpeed?
 
     var body: some View {
         VStack(spacing: 12) {
@@ -53,46 +62,56 @@ struct MenuContentView: View {
             Divider()
 
             if let stats {
-                // CPU
                 MonitorRow(
-                    icon: "cpu",
-                    title: "CPU",
+                    icon: "cpu", title: "CPU",
                     value: String(format: "%.1f%%", stats.cpuUsage * 100),
-                    bar: stats.cpuUsage,
-                    color: barColor(stats.cpuUsage)
+                    bar: stats.cpuUsage, color: barColor(stats.cpuUsage)
                 )
 
-                // Memory
                 MonitorRow(
-                    icon: "memorychip",
-                    title: "Memory",
+                    icon: "memorychip", title: "Memory",
                     value: "\(FileSizeFormatter.format(stats.memoryUsed)) / \(FileSizeFormatter.format(stats.memoryTotal))",
-                    bar: stats.memoryPressure,
-                    color: barColor(stats.memoryPressure)
+                    bar: stats.memoryPressure, color: barColor(stats.memoryPressure)
                 )
 
-                // Disk
                 let diskUsage = stats.diskTotal > 0 ? Double(stats.diskTotal - stats.diskFree) / Double(stats.diskTotal) : 0
                 MonitorRow(
-                    icon: "internaldrive",
-                    title: "Disk",
+                    icon: "internaldrive", title: "Disk",
                     value: "\(FileSizeFormatter.format(stats.diskFree)) free",
-                    bar: diskUsage,
-                    color: barColor(diskUsage)
+                    bar: diskUsage, color: barColor(diskUsage)
                 )
 
-                // Battery
                 if let level = stats.batteryLevel {
                     MonitorRow(
                         icon: stats.batteryIsCharging ? "battery.100.bolt" : "battery.75",
                         title: "Battery",
                         value: String(format: "%.0f%%", level * 100) + (stats.batteryIsCharging ? " Charging" : ""),
-                        bar: level,
-                        color: level > 0.2 ? .green : .red
+                        bar: level, color: level > 0.2 ? .green : .red
                     )
                 }
 
-                // Uptime
+                // Network speed
+                if let net = networkSpeed {
+                    HStack(spacing: 16) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.down")
+                                .font(.system(size: 9))
+                                .foregroundStyle(.green)
+                            Text(net.formattedIn)
+                                .font(.system(size: 11, design: .monospaced))
+                        }
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.up")
+                                .font(.system(size: 9))
+                                .foregroundStyle(.blue)
+                            Text(net.formattedOut)
+                                .font(.system(size: 11, design: .monospaced))
+                        }
+                        Spacer()
+                    }
+                    .padding(.vertical, 2)
+                }
+
                 HStack {
                     Image(systemName: "clock")
                         .foregroundStyle(.secondary)
@@ -146,8 +165,7 @@ struct MenuContentView: View {
         let hours = Int(seconds) / 3600
         let minutes = (Int(seconds) % 3600) / 60
         if hours > 24 {
-            let days = hours / 24
-            return "\(days)d \(hours % 24)h"
+            return "\(hours / 24)d \(hours % 24)h"
         }
         return "\(hours)h \(minutes)m"
     }
@@ -173,7 +191,6 @@ struct MonitorRow: View {
                     .font(.system(size: 11, design: .monospaced))
                     .foregroundStyle(.secondary)
             }
-
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 2)

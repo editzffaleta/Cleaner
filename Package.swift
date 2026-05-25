@@ -36,6 +36,11 @@ let package = Package(
             path: "Sources/MacCleanKit"
         ),
         .executableTarget(
+            name: "MacCleanHelper",
+            dependencies: ["MacCleanKit"],
+            path: "Sources/MacCleanHelper"
+        ),
+        .executableTarget(
             name: "MacCleanTestRunner",
             dependencies: ["MacCleanKit"],
             path: "Sources/MacCleanTestRunner"

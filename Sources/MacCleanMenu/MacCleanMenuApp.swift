@@ -7,7 +7,7 @@ struct MacCleanMenuApp: App {
     @State private var networkMonitor = NetworkSpeedMonitor()
     @State private var stats: SystemStatsCollector.SystemStats?
     @State private var networkSpeed: NetworkSpeedMonitor.NetworkSpeed?
-    @State private var timer: Timer?
+    @State private var pollingTask: Task<Void, Never>?
 
     var body: some Scene {
         MenuBarExtra {
@@ -27,21 +27,21 @@ struct MacCleanMenuApp: App {
     }
 
     private func startPolling() {
-        Task { @MainActor in
-            stats = await statsCollector.collect()
-            networkSpeed = await networkMonitor.measure()
-        }
-        timer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { _ in
-            Task { @MainActor [statsCollector, networkMonitor] in
-                self.stats = await statsCollector.collect()
-                self.networkSpeed = await networkMonitor.measure()
+        pollingTask?.cancel()
+        pollingTask = Task {
+            while !Task.isCancelled {
+                let s = await statsCollector.collect()
+                let n = await networkMonitor.measure()
+                stats = s
+                networkSpeed = n
+                try? await Task.sleep(for: .seconds(3))
             }
         }
     }
 
     private func stopPolling() {
-        timer?.invalidate()
-        timer = nil
+        pollingTask?.cancel()
+        pollingTask = nil
     }
 }
 

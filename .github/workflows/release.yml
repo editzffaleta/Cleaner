@@ -1,0 +1,86 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  release:
+    name: Build & Release DMG
+    runs-on: macos-15
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read version
+        id: version
+        run: |
+          VERSION=$(cat VERSION | tr -d '[:space:]')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Version: $VERSION"
+
+      - name: Check if release exists
+        id: check
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          if gh release view "$TAG" &>/dev/null; then
+            EXISTING_SHA=$(gh release view "$TAG" --json targetCommitish -q '.targetCommitish')
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Release $TAG exists (commit: $EXISTING_SHA)"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Release $TAG does not exist yet"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build release binary
+        run: swift build -c release
+
+      - name: Run tests
+        run: swift run MacCleanTestRunner
+
+      - name: Build DMG
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          bash scripts/build-dmg.sh
+          ls -la .build/MacClean-${VERSION}.dmg
+
+      - name: Delete existing release (same version)
+        if: steps.check.outputs.exists == 'true'
+        run: gh release delete "${{ steps.version.outputs.tag }}" --yes --cleanup-tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          TAG="${{ steps.version.outputs.tag }}"
+
+          gh release create "$TAG" \
+            ".build/MacClean-${VERSION}.dmg" \
+            --title "Mac Clean $TAG" \
+            --generate-notes \
+            --notes-start-tag "$(git tag --sort=-creatordate | head -1 || echo '')" \
+            --notes "$(cat <<EOF
+          ## Mac Clean $TAG
+
+          ### Download
+
+          Download **MacClean-${VERSION}.dmg**, open it, and drag Mac Clean to your Applications folder.
+
+          ### Requirements
+          - macOS 14 (Sonoma) or later
+          - Grant Full Disk Access in System Settings for complete scan results
+
+          ### Safety
+          All deletions go to Trash by default. Protected system paths are blocklisted. Every operation is logged.
+          EOF
+          )"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

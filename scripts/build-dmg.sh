@@ -6,7 +6,7 @@ set -euo pipefail
 
 APP_NAME="Mac Clean"
 BUNDLE_ID="com.macclean.app"
-VERSION="${VERSION:-1.0.0}"
+VERSION="${VERSION:-$(cat VERSION 2>/dev/null | tr -d '[:space:]' || echo '1.0.0')}"
 BUILD_DIR=".build/release"
 DMG_DIR=".build/dmg"
 DMG_NAME="MacClean-${VERSION}.dmg"

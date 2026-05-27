@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="app_icon.png" width="180" alt="Mac Clean Icon" />
+  <img src="assets/app_icon.png" width="150" alt="Mac Clean Icon" />
 </p>
 
 <h1 align="center">Mac Clean</h1>
@@ -16,6 +16,10 @@
   <img src="https://img.shields.io/badge/license-BSD--3--Clause-green?style=flat-square" alt="License" />
   <img src="https://img.shields.io/badge/security-audited-purple?style=flat-square" alt="Security" />
   <img src="https://img.shields.io/badge/PRs-welcome-ff69b4?style=flat-square" alt="PRs Welcome" />
+</p>
+
+<p align="center">
+  <img src="assets/demo.png" width="700" alt="Mac Clean Screenshot" />
 </p>
 
 ---

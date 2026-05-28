@@ -22,6 +22,18 @@
   <img src="assets/demo.png" width="700" alt="Mac Clean Screenshot" />
 </p>
 
+<p align="center">
+  <strong>Install in one command:</strong>
+</p>
+
+```bash
+brew tap iliyami/macclean && brew install --cask mac-clean
+```
+
+<p align="center">
+  Or grab the <a href="https://github.com/iliyami/MacClean/releases/latest">latest DMG</a> from Releases.
+</p>
+
 ---
 
 ## What is Mac Clean?
@@ -179,15 +191,6 @@ bash scripts/build-dmg.sh --notarize
 
 - macOS 14 (Sonoma) or later
 - For building from source: Swift 6 toolchain (Xcode 16+)
-
-### Granting Full Disk Access
-
-Some modules (Mail Attachments, Privacy, Malware) need Full Disk Access to scan protected areas:
-
-1. Open **System Settings → Privacy & Security → Full Disk Access**
-2. Click **+** and navigate to the Mac Clean app
-3. Enable the toggle
-4. Restart Mac Clean
 
 ## Project Structure
 

@@ -48,3 +48,6 @@ Icon?
 *.p12
 *.mobileprovision
 *.provisionprofile
+
+# Marketing copy (not part of the public repo)
+marketing/

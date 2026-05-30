@@ -25,23 +25,11 @@ public enum PlistJunkFilter {
     ) -> Bool {
         guard url.pathExtension == "plist" else { return false }
 
-        // SAFETY: Never touch Apple-owned preference domains. Even if corrupt,
-        // macOS regenerates these. Deleting `com.apple.loginwindow.plist`,
-        // `com.apple.dock.plist`, `com.apple.finder.plist` etc. can break the
-        // user's session, Dock, Finder, syspolicy, and other system components.
+        // SAFETY: Never touch Apple-owned preference domains.
         let name = url.deletingPathExtension().lastPathComponent
         if isAppleSystemDomain(name) { return false }
 
         // SAFETY: Only flag plists that are PROVABLY corrupt — fail to parse.
-        //
-        // The previous heuristic ("filename looks like a bundle ID and Launch
-        // Services doesn't know it → orphaned → delete") was too aggressive.
-        // It flagged plists for:
-        //   - Apps installed in non-standard locations
-        //   - Apps not yet launched (LS registers on first launch)
-        //   - CLI tools, daemons, helpers, frameworks (no .app, no LS entry)
-        //   - Apps the user uninstalled but wants prefs preserved for
-        //   - Anything whose filename happens to contain a dot
         //
         // The `appExistsForBundleID` parameter is intentionally unused here.
         // Any future "orphan detection" mode must be opt-in, never auto-select,
@@ -49,16 +37,15 @@ public enum PlistJunkFilter {
         _ = appExistsForBundleID
 
         guard let data = loadData(url) else {
-            // Couldn't read the file — could be a permission issue, transient
-            // I/O failure, or genuinely missing. Don't blindly flag.
+            // Couldn't read the file — don't blindly flag.
             return false
         }
 
         do {
             _ = try PropertyListSerialization.propertyList(from: data, format: nil)
-            return false   // Parses fine — leave it alone.
+            return false
         } catch {
-            return true    // Provably corrupt.
+            return true
         }
     }
 

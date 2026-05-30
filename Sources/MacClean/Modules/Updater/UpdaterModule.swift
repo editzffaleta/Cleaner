@@ -77,39 +77,4 @@ public actor AppUpdateChecker {
     }
 }
 
-// MARK: - Simple Appcast XML Parser
-
-final class AppcastParser: NSObject, XMLParserDelegate, @unchecked Sendable {
-    private var latestVersion: String?
-    private var currentElement = ""
-    private var inItem = false
-
-    func parseLatestVersion(from data: Data) -> String? {
-        let parser = XMLParser(data: data)
-        parser.delegate = self
-        parser.parse()
-        return latestVersion
-    }
-
-    func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?,
-                qualifiedName: String?, attributes: [String: String] = [:]) {
-        currentElement = elementName
-        if elementName == "item" {
-            inItem = true
-        }
-        if elementName == "enclosure", inItem {
-            if let version = attributes["sparkle:shortVersionString"] ?? attributes["sparkle:version"] {
-                if latestVersion == nil {
-                    latestVersion = version
-                }
-            }
-        }
-    }
-
-    func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?,
-                qualifiedName: String?) {
-        if elementName == "item" {
-            inItem = false
-        }
-    }
-}
+// `AppcastParser` moved to MacCleanKit — see Sources/MacCleanKit/AppcastParser.swift.

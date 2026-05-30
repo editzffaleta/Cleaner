@@ -43,7 +43,7 @@ jobs:
         run: swift build -c release
 
       - name: Run tests
-        run: swift run MacCleanTestRunner
+        run: swift test
 
       - name: Build DMG
         run: |

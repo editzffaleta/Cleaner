@@ -95,11 +95,11 @@ final class SystemJunkViewModel {
         state = .cleaning
 
         Task {
-            let allItems = results.flatMap(\.items)
-            let itemsToClean = allItems.filter { selectedItems.contains($0.url) }
-
-            let result = await engine.clean(items: itemsToClean, mode: .dryRun)
-
+            let result = await CleanActions.executeUserClean(
+                results: results,
+                selectedItems: selectedItems,
+                engine: engine
+            )
             state = .done(freed: result.freedBytes)
         }
     }

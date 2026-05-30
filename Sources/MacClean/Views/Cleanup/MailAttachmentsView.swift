@@ -74,9 +74,12 @@ struct MailAttachmentsView: View {
     }
 
     private func clean() {
-        let items = results.flatMap(\.items).filter { selectedItems.contains($0.url) }
         Task {
-            let result = await appState.cleaningEngine.clean(items: items, mode: .dryRun)
+            let result = await CleanActions.executeUserClean(
+                results: results,
+                selectedItems: selectedItems,
+                engine: appState.cleaningEngine
+            )
             freedSize = result.freedBytes
             isDone = true
         }

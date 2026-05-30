@@ -245,10 +245,13 @@ struct UninstallerView: View {
     }
 
     private func uninstall(_ app: AppInfo) {
-        let filesToRemove = associatedFiles.filter { selectedFiles.contains($0.url) }
         Task {
             try? FileManager.default.trashItem(at: app.path, resultingItemURL: nil)
-            _ = await appState.cleaningEngine.clean(items: filesToRemove, mode: .dryRun)
+            _ = await CleanActions.executeUserClean(
+                items: associatedFiles,
+                selectedItems: selectedFiles,
+                engine: appState.cleaningEngine
+            )
             await loadApps()
             selectedApp = nil
             associatedFiles = []

@@ -10,7 +10,6 @@ let package = Package(
     products: [
         .executable(name: "MacClean", targets: ["MacClean"]),
         .executable(name: "MacCleanMenu", targets: ["MacCleanMenu"]),
-        .executable(name: "MacCleanTestRunner", targets: ["MacCleanTestRunner"]),
         .library(name: "MacCleanKit", targets: ["MacCleanKit"]),
     ],
     dependencies: [
@@ -40,19 +39,19 @@ let package = Package(
             dependencies: ["MacCleanKit"],
             path: "Sources/MacCleanHelper"
         ),
-        .executableTarget(
-            name: "MacCleanTestRunner",
+        .target(
+            name: "MacCleanTestSupport",
             dependencies: ["MacCleanKit"],
-            path: "Sources/MacCleanTestRunner"
+            path: "Tests/MacCleanTestSupport"
         ),
         .testTarget(
             name: "MacCleanTests",
-            dependencies: ["MacClean", "MacCleanKit"],
+            dependencies: ["MacClean", "MacCleanKit", "MacCleanTestSupport"],
             path: "Tests/MacCleanTests"
         ),
         .testTarget(
             name: "MacCleanKitTests",
-            dependencies: ["MacCleanKit"],
+            dependencies: ["MacCleanKit", "MacCleanTestSupport"],
             path: "Tests/MacCleanKitTests"
         ),
     ]

@@ -11,7 +11,7 @@ Be respectful, constructive, and inclusive. We're building software together.
 1. **Fork** the repository
 2. **Clone** your fork: `git clone https://github.com/YOUR_USERNAME/MacClean.git`
 3. **Build**: `swift build`
-4. **Run tests**: `swift run MacCleanTestRunner` (all 56 must pass)
+4. **Run tests**: `swift test` (must pass with 0 failures)
 5. **Create a branch**: `git checkout -b feature/your-feature`
 
 ## Pull Request Guidelines
@@ -19,10 +19,11 @@ Be respectful, constructive, and inclusive. We're building software together.
 ### Before Submitting
 
 - [ ] Your code compiles with `swift build` (zero errors)
-- [ ] All 56 existing tests pass (`swift run MacCleanTestRunner`)
-- [ ] You've added tests for new functionality
+- [ ] All tests pass (`swift test`)
+- [ ] You've added tests for new functionality (see "Testing pattern" below)
 - [ ] No new compiler warnings introduced
 - [ ] You've tested the feature in the running app (not just compilation)
+- [ ] Safety-critical changes (`SafetyGuard.swift`, `CleaningEngine.swift`, `PlistJunkFilter.swift`) come with adversarial test cases
 
 ### PR Format
 
@@ -52,6 +53,72 @@ If UI changes, include before/after screenshots.
 - Use present tense: "Add feature" not "Added feature"
 - First line under 72 characters
 - Reference issues when applicable: "Fix #42: handle empty scan results"
+
+## Testing pattern
+
+This is the architectural rule that every PR must follow. It's how the
+codebase stays testable without dragging in real filesystem state.
+
+**Rule:** *Business logic lives in `MacCleanKit` as pure functions; system
+dependencies (`FileManager`, `NSWorkspace`, `Process`, Mach APIs) are injected
+as closures at the boundary.* The thin wrappers in the `MacClean` target are
+where real implementations get wired up.
+
+### Example: the `PlistJunkFilter` pattern
+
+```swift
+// ❌ Don't do this — untestable, mixes logic with FS calls
+struct BrokenPreferencesCategory: JunkCategory {
+    func filterBroken(_ items: [FileItem]) -> [FileItem] {
+        items.filter { item in
+            guard let data = try? Data(contentsOf: item.url) else { return true }
+            // ... decision logic mixed with FS state ...
+        }
+    }
+}
+
+// ✅ Do this — pure function in Kit, injected loader, fully testable
+public enum PlistJunkFilter {
+    public static func isLikelyBroken(
+        at url: URL,
+        loadData: (URL) -> Data?,                  // injected
+        appExistsForBundleID: (String) -> Bool     // injected
+    ) -> Bool {
+        // pure decision logic — no I/O
+    }
+}
+
+// And the thin wrapper in MacClean target
+struct BrokenPreferencesCategory: JunkCategory {
+    func filterBroken(_ items: [FileItem]) -> [FileItem] {
+        items.filter { item in
+            PlistJunkFilter.isLikelyBroken(
+                at: item.url,
+                loadData: { try? Data(contentsOf: $0) },
+                appExistsForBundleID: { NSWorkspace.shared.urlForApplication(...) != nil }
+            )
+        }
+    }
+}
+```
+
+### Available test fixtures
+
+Use these helpers from `Tests/MacCleanTestSupport/` so your tests don't touch
+the real home directory:
+
+- `TestFixtures.withTempDir { dir in ... }` — temp dir, auto-cleaned
+- `TestFixtures.withTempHome { fakeHome in ... }` — synthetic `~/Library/...` tree
+- `TestFixtures.writeFakeApp(at:bundleIdentifier:name:)` — synthetic `.app` bundle
+- `TestFixtures.writePlist(_:to:)` and `writeCorruptPlist(at:)` — synthetic plists
+- `TestFixtures.writeFile(at:size:modificationDate:contents:)` — synthetic files
+- `MockClock` — controllable time for date-based logic
+
+### Where tests live
+
+- `Tests/MacCleanKitTests/` — pure unit tests against `MacCleanKit` only
+- `Tests/MacCleanTests/` — integration tests that exercise the `MacClean` shell
+- `Tests/MacCleanTestSupport/` — shared fixture helpers (don't add test cases here)
 
 ## Code Style
 

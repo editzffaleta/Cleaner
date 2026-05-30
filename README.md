@@ -12,8 +12,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/platform-macOS%2014%2B-blue?style=flat-square" alt="macOS 14+" />
   <img src="https://img.shields.io/badge/swift-6.0-orange?style=flat-square" alt="Swift 6" />
-  <img src="https://img.shields.io/badge/tests-65%20passing-brightgreen?style=flat-square" alt="Tests" />
-  <img src="https://img.shields.io/badge/coverage-improving-orange?style=flat-square" alt="Coverage" />
+  <img src="https://img.shields.io/badge/tests-275%20passing-brightgreen?style=flat-square" alt="Tests" />
   <img src="https://img.shields.io/badge/license-BSD--3--Clause-green?style=flat-square" alt="License" />
   <img src="https://img.shields.io/badge/security-audited-purple?style=flat-square" alt="Security" />
   <img src="https://img.shields.io/badge/PRs-welcome-ff69b4?style=flat-square" alt="PRs Welcome" />
@@ -245,16 +244,33 @@ Sources/
 ## Tests
 
 ```bash
-swift run MacCleanTestRunner
+swift test
 ```
 
-```
-Results: 65 passed, 0 failed, 65 total
-```
+XCTest-based suite covering:
 
-**Honest disclosure:** the 65 tests cover roughly **15–20% of the codebase**. Most coverage is on models, constants, the protected-paths blocklist, and the new `PlistJunkFilter`. The most safety-critical files — `SafetyGuard.swift` and `CleaningEngine.swift` — are barely tested today. There are no end-to-end tests.
+- **`SafetyGuard`** — 24 adversarial tests (symlinks, traversal, NULL bytes, SIP, protected apps, file caps, idempotence)
+- **`CleaningEngine`** — 9 integration tests (dry-run, trash, permanent, error handling, operation log)
+- **`PlistJunkFilter`** — 9 tests including Apple-system-domain safety contract
+- **`ScanCoordinator`** state machine — scan/cancel/category-filter/include-heavy
+- **`TargetedScanner`** integration — runs against synthetic temp directory fixtures
+- **All 16 system junk categories** — pure target declarations + the filter logic on the procedural ones (`BrokenPreferences`, `BrokenLoginItems`, `UniversalBinaries`, `DeletedUsers`)
+- **`SquarifiedTreemap`** — empty, single, multi-node, area conservation, aspect-ratio properties
+- **`AppMatching`** — all 10 levels of the uninstaller pattern engine
+- **`DuplicateDetection`** — size groups, partial/full hash groups, inode dedup
+- **`MalwareSignatures`** — name patterns + suspicious launch agent payloads
+- **`MaintenanceTask`** — all 10 tasks have descriptions, icons, executable paths
+- **`FileGroup`** — by-size / by-type / by-age grouping
+- **`AppcastParser`** — Sparkle XML parsing
+- **`VolumeInfo`** — usage math, equality
+- **`AppDatabase`** — GRDB cache CRUD, migrations, invalidation
+- **`FSEventMonitor`** — invalidated-path computation
+- **`AppDiscovery`**, **`AppPathFinder`** — smoke tests
+- **End-to-end** — synthetic fixture → scan → results → clean cycle
 
-This is being fixed. See [`docs/TESTING.md`](docs/TESTING.md) for the full plan to reach 85%+ coverage with 100% on safety-critical paths. Progress is tracked in [issues labeled `testing`](https://github.com/iliyami/MacClean/issues?q=is%3Aissue+label%3Atesting). Contributions welcome — each phase has a "good first issue" surface.
+Test infrastructure (`Tests/MacCleanTestSupport/`) provides `withTempHome`, `withFakeApp`, `withFakePlist`, and other fixture helpers so tests stay deterministic and never touch the user's real home.
+
+Coverage target: **85%+ overall**, **100% on `SafetyGuard` and `CleaningEngine`** (the death-and-life files). See [`docs/TESTING.md`](docs/TESTING.md) for the full roadmap.
 
 ## Security
 

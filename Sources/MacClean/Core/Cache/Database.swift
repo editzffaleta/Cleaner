@@ -21,7 +21,7 @@ public final class AppDatabase: Sendable {
         self.dbPool = dbPool
     }
 
-    private func migrate() throws {
+    func migrate() throws {
         var migrator = DatabaseMigrator()
 
         migrator.registerMigration("v1_create_tables") { db in

@@ -114,45 +114,9 @@ final class ThinBinaryOperationTests: XCTestCase {
                       "no backup or temp artifacts should remain after success — saw \(strays)")
     }
 
-    // MARK: - CleanActions routing
-
-    /// The whole point of routing through CleanActions: a
-    /// `ScanResult(category: .universalBinaries, ...)` must trigger thinning,
-    /// NOT a trash deletion that would destroy the app's executable.
-    func testCleanActions_routes_universalBinariesToThinning_notTrash() async throws {
-        let binary = try makeFatBinary()
-        let originalSize = try FileManager.default
-            .attributesOfItem(atPath: binary.path(percentEncoded: false))[.size] as! UInt64
-
-        let item = FileItem(
-            url: binary,
-            name: binary.lastPathComponent,
-            size: originalSize,
-            allocatedSize: originalSize,
-            isDirectory: false
-        )
-        let scanResult = ScanResult(
-            category: .universalBinaries,
-            items: [item],
-            autoSelect: false
-        )
-
-        let cleanResult = await CleanActions.executeUserClean(
-            results: [scanResult],
-            selectedItems: [binary],
-            engine: CleaningEngine()
-        )
-
-        // Binary STILL EXISTS (thinned, not deleted).
-        XCTAssertTrue(FileManager.default.fileExists(atPath: binary.path(percentEncoded: false)),
-                      "executable must NOT be moved to Trash — thinning preserves the binary in place")
-        // Single-arch after.
-        XCTAssertEqual(UniversalBinaryFixture.architectures(of: binary).count, 1)
-        // CleanResult summary reflects the saved bytes.
-        XCTAssertEqual(cleanResult.removedCount, 1, "one binary processed")
-        XCTAssertGreaterThan(cleanResult.freedBytes, 0, "thinning saved bytes")
-        XCTAssertTrue(cleanResult.errors.isEmpty, "no errors expected on happy path")
-    }
+    // (CleanActions routing now expects bundle URLs, not bare binaries.
+    // That path is covered end-to-end in UniversalBinariesScannerTests.
+    // ThinBinaryOperationTests stays focused on the bare-binary primitive.)
 
     // MARK: - Permissions preserved
 

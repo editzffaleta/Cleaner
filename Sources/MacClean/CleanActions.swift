@@ -52,9 +52,10 @@ public enum CleanActions {
         )
     }
 
-    /// Runs `ThinBinaryOperation` against each item and folds the per-binary
-    /// outcomes into a `CleaningEngine.CleanResult` shape so the caller's
-    /// "X items, Y MB freed" UI summary works uniformly.
+    /// Runs `ThinAppBundleOperation` against each item (item.url = bundle
+    /// path) and folds the per-bundle outcomes into a
+    /// `CleaningEngine.CleanResult` so the caller's "X items, Y MB freed"
+    /// UI summary keeps working uniformly.
     private static func thinSelectedBinaries(
         _ items: [FileItem]
     ) async -> CleaningEngine.CleanResult {
@@ -63,25 +64,30 @@ public enum CleanActions {
                 removedCount: 0, freedBytes: 0, errors: [], skippedCount: 0
             )
         }
-        let op = ThinBinaryOperation()
+        let op = ThinAppBundleOperation()
         let targetArch = BundleHostInfo.current.hostArch
-        var savedCount = 0
+        var bundleCount = 0
         var savedBytes: UInt64 = 0
         var errors: [CleaningEngine.CleanError] = []
         for item in items {
             do {
-                let r = try await op.thin(binary: item.url, to: targetArch)
-                savedCount += 1
+                let r = try await op.thin(bundle: item.url, to: targetArch)
+                bundleCount += 1
                 savedBytes += r.bytesSaved
+                for (path, msg) in r.perBinaryErrors {
+                    errors.append(CleaningEngine.CleanError(
+                        path: path, error: "binary thin failed: \(msg)"
+                    ))
+                }
             } catch {
                 errors.append(CleaningEngine.CleanError(
                     path: item.url.path(percentEncoded: false),
-                    error: "thin failed: \(error)"
+                    error: "bundle thin failed: \(error.localizedDescription)"
                 ))
             }
         }
         return CleaningEngine.CleanResult(
-            removedCount: savedCount,
+            removedCount: bundleCount,
             freedBytes: savedBytes,
             errors: errors,
             skippedCount: 0

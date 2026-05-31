@@ -63,11 +63,16 @@ final class UniversalBinariesScannerTests: XCTestCase {
     }
 
     func testScanner_picksUpFatNonAppleApp() throws {
-        _ = try makeFakeApp(name: "AcmeChat", bundleID: "com.acme.chat")
+        let appURL = try makeFakeApp(name: "AcmeChat", bundleID: "com.acme.chat")
 
         let items = UniversalBinariesScanner.scan(in: root)
         XCTAssertEqual(items.count, 1, "AcmeChat should be eligible")
-        XCTAssertTrue(items[0].url.path(percentEncoded: false).contains("AcmeChat.app"))
+        // Surfaces the bundle URL (not the inner executable) so the cleanup
+        // path can walk the whole bundle.
+        XCTAssertEqual(items[0].url.standardizedFileURL,
+                       appURL.standardizedFileURL)
+        XCTAssertTrue(items[0].isDirectory,
+                      "FileItem points at the .app bundle directory")
         XCTAssertGreaterThan(items[0].size, 0,
                              "estimated savings must be reported for the UI")
     }
@@ -97,7 +102,8 @@ final class UniversalBinariesScannerTests: XCTestCase {
 
     /// End-to-end: scan a synthetic app, take its FileItem, hand to
     /// CleanActions.executeUserClean as a .universalBinaries ScanResult.
-    /// Confirm the binary on disk is now single-arch.
+    /// Confirm the inner binary on disk is now single-arch and the
+    /// bundle's codesign is still valid.
     func testScannerToCleanActions_endToEnd_thinsTheBinaryInPlace() async throws {
         let appURL = try makeFakeApp(name: "AcmeChat", bundleID: "com.acme.chat")
         let items = UniversalBinariesScanner.scan(in: root)
@@ -113,9 +119,14 @@ final class UniversalBinariesScannerTests: XCTestCase {
         XCTAssertEqual(result.removedCount, 1)
         XCTAssertTrue(result.errors.isEmpty, "no errors expected: \(result.errors)")
 
-        let archsAfter = UniversalBinaryFixture.architectures(of: item.url)
-        XCTAssertEqual(archsAfter, [BundleHostInfo.current.hostArch.lipoName])
-        XCTAssertTrue(UniversalBinaryFixture.codesignVerifies(item.url))
+        // Inner exec is now single-arch.
+        let exec = appURL.appending(path: "Contents/MacOS/AcmeChat")
+        XCTAssertEqual(UniversalBinaryFixture.architectures(of: exec),
+                       [BundleHostInfo.current.hostArch.lipoName])
+        // Bundle (and its deep contents) verifies — the deep-resign at the
+        // bundle level worked.
+        XCTAssertTrue(UniversalBinaryFixture.codesignVerifies(appURL),
+                      "outer .app bundle should still pass codesign --verify")
 
         // App bundle still exists (just smaller).
         XCTAssertTrue(FileManager.default.fileExists(atPath: appURL.path(percentEncoded: false)))

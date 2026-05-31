@@ -60,14 +60,25 @@ final class XPCSignatureGuardTests: XCTestCase {
 
     /// SPEC: when the requirement does match the caller's identifier, the
     /// validator returns true. We don't know exactly what xctest's
-    /// identifier is across CI/local, so check via `SecCodeCopySigningInformation`
-    /// and feed the result back into the requirement.
+    /// identifier is across CI/local, so convert the running-code reference
+    /// to a static-code reference, read its signing identifier, then feed
+    /// that back into the requirement.
     func testAccepts_matchingIdentifierFromOwnSigningInfo() throws {
         let code = try selfCode()
 
+        // SecCode and SecStaticCode are sibling CFTypes, not subclasses —
+        // `as!` between them is undefined and SIGTRAPs on macOS 15.
+        // Convert properly via SecCodeCopyStaticCode.
+        var staticCode: SecStaticCode?
+        let convertStatus = SecCodeCopyStaticCode(code, [], &staticCode)
+        try XCTSkipUnless(
+            convertStatus == errSecSuccess && staticCode != nil,
+            "SecCodeCopyStaticCode failed (status \(convertStatus))"
+        )
+
         var info: CFDictionary?
         let status = SecCodeCopySigningInformation(
-            code as! SecStaticCode,  // SecCode → SecStaticCode bridge OK
+            staticCode!,
             SecCSFlags(rawValue: kSecCSSigningInformation),
             &info
         )

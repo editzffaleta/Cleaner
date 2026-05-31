@@ -9,8 +9,7 @@ struct DuplicatesView: View {
     @State private var scanProgress: Double = 0
     @State private var scanPhase = ""
     @State private var scanComplete = false
-    @State private var isDone = false
-    @State private var freedSize: UInt64 = 0
+    @State private var completion: CleanSummary?
     @State private var elapsedSeconds: Int = 0
 
     var body: some View {
@@ -27,8 +26,7 @@ struct DuplicatesView: View {
                     selectedItems: $selectedItems,
                     isScanning: false,
                     scanComplete: true,
-                    isDone: false,
-                    freedSize: 0,
+                    completion: nil,
                     onScan: scan, onClean: clean, onReset: reset
                 )
             } else if !results.isEmpty {
@@ -39,11 +37,10 @@ struct DuplicatesView: View {
                     results: results,
                     selectedItems: $selectedItems,
                     isScanning: false,
-                    isDone: isDone,
-                    freedSize: freedSize,
+                    completion: completion,
                     onScan: scan, onClean: clean, onReset: reset
                 )
-            } else if isDone {
+            } else if completion != nil {
                 ModuleContainerView(
                     title: "Duplicates",
                     subtitle: "",
@@ -51,8 +48,7 @@ struct DuplicatesView: View {
                     results: [],
                     selectedItems: $selectedItems,
                     isScanning: false,
-                    isDone: true,
-                    freedSize: freedSize,
+                    completion: completion,
                     onScan: scan, onClean: clean, onReset: reset
                 )
             } else {
@@ -170,18 +166,23 @@ struct DuplicatesView: View {
     }
 
     private func clean() {
+        let preCleanSelectedCount = selectedItems.count
         Task {
             let result = await CleanActions.executeUserClean(
                 results: results,
                 selectedItems: selectedItems,
                 engine: appState.cleaningEngine
             )
-            freedSize = result.freedBytes
-            isDone = true
+            completion = CleanSummary(
+                selectedCount: preCleanSelectedCount,
+                removedCount: result.removedCount,
+                freedBytes: result.freedBytes,
+                errorCount: result.errors.count
+            )
         }
     }
 
     private func reset() {
-        results = []; selectedItems = []; isDone = false; freedSize = 0; scanComplete = false; elapsedSeconds = 0
+        results = []; selectedItems = []; completion = nil; scanComplete = false; elapsedSeconds = 0
     }
 }

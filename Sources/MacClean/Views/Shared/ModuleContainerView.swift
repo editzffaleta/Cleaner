@@ -12,8 +12,10 @@ struct ModuleContainerView: View {
     let scanProgress: Double
     let scanPhase: String
     let scanComplete: Bool
-    let isDone: Bool
-    let freedSize: UInt64
+    /// `nil` until clean has run. When set, the doneView renders one of
+    /// three honest end-states (nothing selected / everything errored /
+    /// happy path) instead of an ambiguous "0 bytes cleaned up".
+    let completion: CleanSummary?
     let onScan: () -> Void
     let onClean: () -> Void
     let onReset: () -> Void
@@ -29,8 +31,7 @@ struct ModuleContainerView: View {
         scanProgress: Double = 0.5,
         scanPhase: String = "Scanning...",
         scanComplete: Bool = false,
-        isDone: Bool,
-        freedSize: UInt64,
+        completion: CleanSummary? = nil,
         onScan: @escaping () -> Void,
         onClean: @escaping () -> Void,
         onReset: @escaping () -> Void
@@ -45,8 +46,7 @@ struct ModuleContainerView: View {
         self.scanProgress = scanProgress
         self.scanPhase = scanPhase
         self.scanComplete = scanComplete
-        self.isDone = isDone
-        self.freedSize = freedSize
+        self.completion = completion
         self.onScan = onScan
         self.onClean = onClean
         self.onReset = onReset
@@ -58,10 +58,14 @@ struct ModuleContainerView: View {
             .reduce(0) { $0 + $1.size }
     }
 
+    private var selectedCount: Int {
+        selectedItems.count
+    }
+
     var body: some View {
         Group {
-            if isDone {
-                doneView
+            if let completion {
+                doneView(summary: completion)
             } else if !results.isEmpty {
                 resultsView
             } else if isScanning {
@@ -132,6 +136,14 @@ struct ModuleContainerView: View {
                         gradient: theme.buttonGradient,
                         size: CGSize(width: 110, height: 40)
                     ))
+                    // Prevent clicking Clean with nothing checked — the
+                    // resulting "0 bytes cleaned up" screen used to be
+                    // indistinguishable from a real cleanup failure.
+                    .disabled(selectedCount == 0)
+                    .opacity(selectedCount == 0 ? 0.5 : 1.0)
+                    .help(selectedCount == 0
+                          ? "Check at least one item to clean"
+                          : "Move \(selectedCount) item(s) to Trash")
             }
             .padding(.horizontal, 24)
             .padding(.vertical, 14)
@@ -144,14 +156,52 @@ struct ModuleContainerView: View {
         }
     }
 
-    private var doneView: some View {
+    private func doneView(summary: CleanSummary) -> some View {
         VStack(spacing: 20) {
             Spacer()
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 52))
-                .foregroundStyle(.white)
-            SizeDisplay(size: freedSize, label: "cleaned up")
-                .foregroundStyle(.white)
+
+            // Three honest end-states. Previously this view rendered
+            // "0 bytes cleaned up" for all of: nothing-selected,
+            // everything-errored, AND no-junk-found cases — making the
+            // app look broken when it was working correctly.
+            if summary.selectedCount == 0 {
+                Image(systemName: "checklist.unchecked")
+                    .font(.system(size: 52))
+                    .foregroundStyle(.white.opacity(0.85))
+                Text("Nothing was selected")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(.white)
+                Text("Re-run the scan, check the items you want to remove, then click Clean.")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.white.opacity(0.6))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+            } else if summary.removedCount == 0 {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 52))
+                    .foregroundStyle(.orange.opacity(0.85))
+                Text("\(summary.selectedCount) item\(summary.selectedCount == 1 ? "" : "s") couldn't be cleaned")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(.white)
+                Text("\(summary.errorCount) error\(summary.errorCount == 1 ? "" : "s") during cleanup. Check Console for details.")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.white.opacity(0.65))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+            } else {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 52))
+                    .foregroundStyle(.white)
+                SizeDisplay(size: summary.freedBytes, label: "cleaned up")
+                    .foregroundStyle(.white)
+                if summary.removedCount < summary.selectedCount {
+                    Text("\(summary.removedCount) of \(summary.selectedCount) items removed" +
+                         (summary.errorCount > 0 ? " — \(summary.errorCount) error\(summary.errorCount == 1 ? "" : "s")" : ""))
+                        .font(.system(size: 12))
+                        .foregroundStyle(.white.opacity(0.65))
+                }
+            }
+
             Button("Done") { onReset() }
                 .buttonStyle(.bordered)
                 .tint(.white)

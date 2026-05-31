@@ -18,8 +18,8 @@ struct SystemJunkView: View {
                 emptyView
             case .cleaning:
                 cleaningView
-            case .done(let freed):
-                doneView(freed: freed)
+            case .done(let summary):
+                doneView(summary: summary)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -87,6 +87,14 @@ struct SystemJunkView: View {
                         gradient: ModuleTheme.cleanup.buttonGradient,
                         size: CGSize(width: 110, height: 40)
                     ))
+                    // Prevent clicking Clean with nothing checked — that
+                    // path used to drop the user into a misleading "0 bytes
+                    // cleaned up" screen that looked like a failed clean.
+                    .disabled(viewModel.selectedCount == 0)
+                    .opacity(viewModel.selectedCount == 0 ? 0.5 : 1.0)
+                    .help(viewModel.selectedCount == 0
+                          ? "Check at least one item to clean"
+                          : "Move \(viewModel.selectedCount) item(s) to Trash")
                 }
             }
             .padding(.horizontal, 24)
@@ -131,14 +139,55 @@ struct SystemJunkView: View {
         }
     }
 
-    private func doneView(freed: UInt64) -> some View {
+    private func doneView(summary: CleanSummary) -> some View {
         VStack(spacing: 20) {
             Spacer()
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 52))
-                .foregroundStyle(.white)
-            SizeDisplay(size: freed, label: "cleaned up")
-                .foregroundStyle(.white)
+
+            // Three distinguishable end-states. The user-reported confusion
+            // (the Reddit "0 bytes cleaned up" screenshot) was the second
+            // case: scan surfaced items but they were all in autoSelect=false
+            // categories (most commonly Universal Binaries) so nothing was
+            // checked when Clean was clicked. Saying "0 bytes" looked broken;
+            // saying "Nothing was selected" tells the user what to do next.
+            if summary.selectedCount == 0 {
+                Image(systemName: "checklist.unchecked")
+                    .font(.system(size: 52))
+                    .foregroundStyle(.white.opacity(0.85))
+                Text("Nothing was selected")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(.white)
+                Text("Re-run the scan, check the items you want to remove, then click Clean.")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.white.opacity(0.6))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+            } else if summary.removedCount == 0 {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 52))
+                    .foregroundStyle(.orange.opacity(0.85))
+                Text("\(summary.selectedCount) item\(summary.selectedCount == 1 ? "" : "s") couldn't be cleaned")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(.white)
+                Text("\(summary.errorCount) error\(summary.errorCount == 1 ? "" : "s") during cleanup. Check Console for details.")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.white.opacity(0.65))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+            } else {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 52))
+                    .foregroundStyle(.white)
+                SizeDisplay(size: summary.freedBytes, label: "cleaned up")
+                    .foregroundStyle(.white)
+                if summary.removedCount < summary.selectedCount {
+                    // Partial success — tell them what got skipped.
+                    Text("\(summary.removedCount) of \(summary.selectedCount) items removed" +
+                         (summary.errorCount > 0 ? " — \(summary.errorCount) error\(summary.errorCount == 1 ? "" : "s")" : ""))
+                        .font(.system(size: 12))
+                        .foregroundStyle(.white.opacity(0.65))
+                }
+            }
+
             Button("Done") { viewModel.reset() }
                 .buttonStyle(.bordered)
                 .tint(.white)

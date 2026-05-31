@@ -9,7 +9,7 @@ final class SystemJunkViewModel {
         case results
         case empty
         case cleaning
-        case done(freed: UInt64)
+        case done(summary: CleanSummary)
     }
 
     var state: State = .idle
@@ -93,6 +93,7 @@ final class SystemJunkViewModel {
 
     func startCleaning(engine: CleaningEngine) {
         state = .cleaning
+        let preCleanSelectedCount = selectedItems.count
 
         Task {
             let result = await CleanActions.executeUserClean(
@@ -100,7 +101,12 @@ final class SystemJunkViewModel {
                 selectedItems: selectedItems,
                 engine: engine
             )
-            state = .done(freed: result.freedBytes)
+            state = .done(summary: CleanSummary(
+                selectedCount: preCleanSelectedCount,
+                removedCount: result.removedCount,
+                freedBytes: result.freedBytes,
+                errorCount: result.errors.count
+            ))
         }
     }
 

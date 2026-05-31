@@ -1,6 +1,7 @@
 import Foundation
 import IOKit
 import IOKit.ps
+import MacCleanKit
 
 public actor SystemStatsCollector {
     public struct SystemStats: Sendable {
@@ -20,7 +21,7 @@ public actor SystemStatsCollector {
         public let uptime: TimeInterval
     }
 
-    private var previousCPUTicks: (user: UInt64, system: UInt64, idle: UInt64, nice: UInt64) = (0, 0, 0, 0)
+    private var previousCPUTicks = CPUTicks(user: 0, system: 0, idle: 0, nice: 0)
 
     public init() {}
 
@@ -65,33 +66,20 @@ public actor SystemStatsCollector {
 
         guard result == KERN_SUCCESS, let info = cpuInfo else { return 0 }
         defer {
-            vm_deallocate(mach_task_self_, vm_address_t(bitPattern: info), vm_size_t(numCPUInfo) * vm_size_t(MemoryLayout<Int32>.size))
+            vm_deallocate(
+                mach_task_self_,
+                vm_address_t(bitPattern: info),
+                vm_size_t(numCPUInfo) * vm_size_t(MemoryLayout<Int32>.size)
+            )
         }
 
-        var totalUser: UInt64 = 0
-        var totalSystem: UInt64 = 0
-        var totalIdle: UInt64 = 0
-        var totalNice: UInt64 = 0
-
-        for i in 0..<Int(numCPUs) {
-            let offset = Int(CPU_STATE_MAX) * i
-            totalUser += UInt64(info[offset + Int(CPU_STATE_USER)])
-            totalSystem += UInt64(info[offset + Int(CPU_STATE_SYSTEM)])
-            totalIdle += UInt64(info[offset + Int(CPU_STATE_IDLE)])
-            totalNice += UInt64(info[offset + Int(CPU_STATE_NICE)])
-        }
-
-        let userDiff = totalUser - previousCPUTicks.user
-        let systemDiff = totalSystem - previousCPUTicks.system
-        let idleDiff = totalIdle - previousCPUTicks.idle
-        let niceDiff = totalNice - previousCPUTicks.nice
-
-        previousCPUTicks = (totalUser, totalSystem, totalIdle, totalNice)
-
-        let totalDiff = userDiff + systemDiff + idleDiff + niceDiff
-        guard totalDiff > 0 else { return 0 }
-
-        return Double(userDiff + systemDiff + niceDiff) / Double(totalDiff)
+        // Hand off the raw mach data to the MacCleanKit parser — same
+        // tests run against synthetic fixtures cover this code path now.
+        let raw = Array(UnsafeBufferPointer(start: info, count: Int(numCPUInfo)))
+        let current = CPUTicks.summed(rawLoadInfo: raw, cpuCount: Int(numCPUs))
+        let usage = CPUUsage(previous: previousCPUTicks, current: current)
+        previousCPUTicks = current
+        return usage?.totalActiveFraction ?? 0
     }
 
     // MARK: - Memory
@@ -107,37 +95,43 @@ public actor SystemStatsCollector {
         let total = UInt64(ProcessInfo.processInfo.physicalMemory)
 
         var stats = vm_statistics64()
-        var count = mach_msg_type_number_t(MemoryLayout<vm_statistics64>.size / MemoryLayout<integer_t>.size)
-
+        var count = mach_msg_type_number_t(
+            MemoryLayout<vm_statistics64>.size / MemoryLayout<integer_t>.size
+        )
         let result = withUnsafeMutablePointer(to: &stats) { ptr in
             ptr.withMemoryRebound(to: integer_t.self, capacity: Int(count)) { intPtr in
                 host_statistics64(mach_host_self(), HOST_VM_INFO64, intPtr, &count)
             }
         }
-
         guard result == KERN_SUCCESS else {
             return MemoryInfo(total: total, used: 0, pressure: 0, swapUsed: 0)
         }
 
-        let pageSize = UInt64(getpagesize())
-        let active = UInt64(stats.active_count) * pageSize
-        let wired = UInt64(stats.wire_count) * pageSize
-        let compressed = UInt64(stats.compressor_page_count) * pageSize
-        let used = active + wired + compressed
-
-        let free = UInt64(stats.free_count) * pageSize
-        let inactive = UInt64(stats.inactive_count) * pageSize
-        let pressure = Double(used) / Double(total)
-
-        // Swap info
         var swapStats = xsw_usage()
         var swapSize = MemoryLayout<xsw_usage>.size
         sysctlbyname("vm.swapusage", &swapStats, &swapSize, nil, 0)
-        let swapUsed = UInt64(swapStats.xsu_used)
 
-        _ = (free, inactive) // Suppress unused warnings
-
-        return MemoryInfo(total: total, used: used, pressure: pressure, swapUsed: swapUsed)
+        // Hand off to MacCleanKit pure types — same code paths tested in
+        // MemoryStatsTests against fixture VMStatistics.
+        let vm = VMStatistics(
+            activeCount: UInt64(stats.active_count),
+            inactiveCount: UInt64(stats.inactive_count),
+            wireCount: UInt64(stats.wire_count),
+            freeCount: UInt64(stats.free_count),
+            compressorPageCount: UInt64(stats.compressor_page_count)
+        )
+        let usage = MemoryUsage(
+            physicalTotal: total,
+            vmStats: vm,
+            pageSize: UInt64(getpagesize()),
+            swapUsed: UInt64(swapStats.xsu_used)
+        )
+        return MemoryInfo(
+            total: usage.total,
+            used: usage.used,
+            pressure: usage.pressure,
+            swapUsed: usage.swapUsed
+        )
     }
 
     // MARK: - Disk
@@ -155,11 +149,13 @@ public actor SystemStatsCollector {
         ]) else {
             return DiskInfo(total: 0, free: 0)
         }
-
-        return DiskInfo(
+        // Route through MacCleanKit's DiskUsage so the free-clamping +
+        // used/usedFraction math is exercised by DiskStatsTests fixtures.
+        let usage = DiskUsage(
             total: UInt64(values.volumeTotalCapacity ?? 0),
             free: UInt64(values.volumeAvailableCapacityForImportantUsage ?? 0)
         )
+        return DiskInfo(total: usage.total, free: usage.free)
     }
 
     // MARK: - Battery

@@ -52,7 +52,18 @@ public actor FileTreeScanner {
             return rootNode
         }
 
-        var nodeMap: [String: FileNode] = [root.path(percentEncoded: false): rootNode]
+        // Normalize: strip any trailing slash so root and child-derived
+        // parent paths line up. `URL.deletingLastPathComponent()` on a file
+        // URL returns a directory URL whose `path(percentEncoded:)` ends
+        // in "/" — that mismatched the root key unconditionally and
+        // silently produced an empty tree (SpaceLens treemap rendered
+        // nothing in that state).
+        func key(_ url: URL) -> String {
+            let p = url.path(percentEncoded: false)
+            return (p.hasSuffix("/") && p.count > 1) ? String(p.dropLast()) : p
+        }
+
+        var nodeMap: [String: FileNode] = [key(root): rootNode]
 
         while let obj = enumerator.nextObject() {
             guard let fileURL = obj as? URL else { continue }
@@ -67,13 +78,13 @@ public actor FileTreeScanner {
                 isDirectory: isDir
             )
 
-            let parentPath = fileURL.deletingLastPathComponent().path(percentEncoded: false)
+            let parentPath = key(fileURL.deletingLastPathComponent())
             if let parent = nodeMap[parentPath] {
                 parent.addChild(node)
             }
 
             if isDir {
-                nodeMap[fileURL.path(percentEncoded: false)] = node
+                nodeMap[key(fileURL)] = node
             }
         }
 

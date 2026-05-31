@@ -52,6 +52,50 @@ final class MaintenanceTaskTests: XCTestCase {
         XCTAssertEqual(MaintenanceTask.freeUpRAM.id, "Free Up RAM")
     }
 
+    // MARK: - Severity classification
+
+    /// SPEC: the three tasks with multi-hour side effects on the user's
+    /// daily experience MUST be classified .advanced so the View can
+    /// gate them behind explicit consent. This test is a regression
+    /// guard against a refactor accidentally re-classifying them as safe.
+    func testAdvancedTasks_includeTheKnownDangerousOnes() {
+        XCTAssertEqual(MaintenanceTask.rebuildLaunchServices.severity, .advanced,
+                       "Rebuild Launch Services breaks file-type-to-app mapping for hours — must be .advanced")
+        XCTAssertEqual(MaintenanceTask.reindexSpotlight.severity, .advanced,
+                       "Reindex Spotlight kills search for hours — must be .advanced")
+        XCTAssertEqual(MaintenanceTask.thinTimeMachineSnapshots.severity, .advanced,
+                       "Thin Time Machine Snapshots deletes local snapshots — must be .advanced")
+    }
+
+    /// SPEC: every-day-safe tasks stay safe (no friction).
+    func testSafeTasks_areNotGatedBehindFriction() {
+        XCTAssertEqual(MaintenanceTask.freeUpRAM.severity, .safe)
+        XCTAssertEqual(MaintenanceTask.flushDNSCache.severity, .safe)
+        XCTAssertEqual(MaintenanceTask.verifyStartupDisk.severity,
+                       .safe, "verify is read-only — no side effects")
+    }
+
+    func testEveryTaskHasNonEmptySideEffectsDescription() {
+        for task in MaintenanceTask.allCases {
+            XCTAssertFalse(
+                task.sideEffects.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                "\(task) is missing a sideEffects description — the confirmation modal needs something to show"
+            )
+        }
+    }
+
+    func testAdvancedTaskSideEffects_warnInPlainEnglish() {
+        // The dangerous ones must explicitly call out the duration of impact,
+        // not just the action. Users don't know what "rebuild Launch Services"
+        // means; they need "your double-clicks will fail for hours".
+        let lsCopy = MaintenanceTask.rebuildLaunchServices.sideEffects.lowercased()
+        XCTAssertTrue(lsCopy.contains("hour"),
+                      "Rebuild Launch Services side-effect text must mention time-to-recover")
+        let spotlightCopy = MaintenanceTask.reindexSpotlight.sideEffects.lowercased()
+        XCTAssertTrue(spotlightCopy.contains("hour") || spotlightCopy.contains("longer"),
+                      "Reindex Spotlight side-effect text must mention time-to-recover")
+    }
+
     func testAllExecutablePathsAreAbsolute() {
         for task in MaintenanceTask.allCases {
             if let cmd = task.systemCommand {

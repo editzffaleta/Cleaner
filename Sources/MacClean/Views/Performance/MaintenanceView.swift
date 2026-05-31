@@ -4,6 +4,8 @@ import MacCleanKit
 struct MaintenanceView: View {
     @State private var taskStates: [MaintenanceTask: TaskState] = [:]
     @State private var executor = MaintenanceExecutor()
+    /// When non-nil, the confirmation alert is presented for this task.
+    @State private var taskAwaitingConfirmation: MaintenanceTask?
 
     enum TaskState {
         case idle
@@ -24,10 +26,14 @@ struct MaintenanceView: View {
                         .foregroundStyle(.white.opacity(0.6))
                 }
                 Spacer()
-                Button("Run All") { runAll() }
+                // Was "Run All" — but blanket-running every task in this
+                // module hides hours-long Spotlight/Launch-Services
+                // disruption behind a single click. Only fire-and-forget
+                // safe tasks now; advanced ones require per-task consent.
+                Button("Run Safe Tasks") { runSafeTasks() }
                     .buttonStyle(SuperEllipseButtonStyle(
                         gradient: ModuleTheme.performance.buttonGradient,
-                        size: CGSize(width: 90, height: 34)
+                        size: CGSize(width: 120, height: 34)
                     ))
             }
             .padding(.horizontal, 24)
@@ -43,6 +49,25 @@ struct MaintenanceView: View {
                 .padding(.bottom, 20)
             }
         }
+        .alert(
+            "Run \(taskAwaitingConfirmation?.rawValue ?? "")?",
+            isPresented: Binding(
+                get: { taskAwaitingConfirmation != nil },
+                set: { if !$0 { taskAwaitingConfirmation = nil } }
+            ),
+            presenting: taskAwaitingConfirmation
+        ) { task in
+            Button("Cancel", role: .cancel) {
+                taskAwaitingConfirmation = nil
+            }
+            Button("Run Anyway", role: .destructive) {
+                let captured = task
+                taskAwaitingConfirmation = nil
+                runTask(captured)
+            }
+        } message: { task in
+            Text(task.sideEffects)
+        }
     }
 
     private func taskRow(_ task: MaintenanceTask) -> some View {
@@ -53,9 +78,20 @@ struct MaintenanceView: View {
                 .frame(width: 26)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(task.rawValue)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.white)
+                HStack(spacing: 6) {
+                    Text(task.rawValue)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.white)
+                    if task.severity == .advanced {
+                        Text("ADVANCED")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundStyle(.orange)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(.orange.opacity(0.15))
+                            .clipShape(RoundedRectangle(cornerRadius: 3))
+                    }
+                }
                 Text(task.description)
                     .font(.system(size: 11))
                     .foregroundStyle(.white.opacity(0.45))
@@ -67,14 +103,21 @@ struct MaintenanceView: View {
             statusView(for: task)
 
             Button {
-                runTask(task)
+                didTapRun(task)
             } label: {
-                Image(systemName: "play.circle.fill")
+                Image(systemName: task.severity == .advanced
+                      ? "exclamationmark.triangle.fill"
+                      : "play.circle.fill")
                     .font(.system(size: 20))
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(task.severity == .advanced
+                                     ? .orange.opacity(0.85)
+                                     : .white.opacity(0.6))
             }
             .buttonStyle(.plain)
             .disabled(isRunning(task))
+            .help(task.severity == .advanced
+                  ? "Has multi-hour side effects — opens a confirmation"
+                  : "Run this task")
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
@@ -105,6 +148,17 @@ struct MaintenanceView: View {
         return false
     }
 
+    /// Routes through the severity check: safe tasks run immediately,
+    /// advanced tasks pop the confirmation alert first.
+    private func didTapRun(_ task: MaintenanceTask) {
+        switch task.severity {
+        case .safe:
+            runTask(task)
+        case .advanced:
+            taskAwaitingConfirmation = task
+        }
+    }
+
     private func runTask(_ task: MaintenanceTask) {
         taskStates[task] = .running
         Task {
@@ -117,8 +171,10 @@ struct MaintenanceView: View {
         }
     }
 
-    private func runAll() {
-        for task in MaintenanceTask.allCases {
+    /// Bulk button now runs ONLY safe tasks. Advanced tasks must be
+    /// explicitly individually confirmed.
+    private func runSafeTasks() {
+        for task in MaintenanceTask.allCases where task.severity == .safe {
             runTask(task)
         }
     }

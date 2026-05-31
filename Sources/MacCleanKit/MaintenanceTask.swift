@@ -57,6 +57,66 @@ public enum MaintenanceTask: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
+    /// How much disruption to expect from running this task.
+    ///
+    /// `.safe` — runs and finishes; the user's experience doesn't change.
+    /// `.advanced` — has side effects the user will notice for minutes/hours
+    /// after the task itself "succeeds." Must require explicit consent
+    /// before being run; must not be included in bulk "run all" operations.
+    public enum Severity: Sendable {
+        case safe
+        case advanced
+    }
+
+    public var severity: Severity {
+        switch self {
+        // Read-only or trivially reversible — run on click.
+        case .freeUpRAM,                // purge inactive memory
+             .freeUpPurgeableSpace,     // deletes only files marked purgeable
+             .verifyStartupDisk,        // read-only check
+             .flushDNSCache,            // re-resolves in ms
+             .runMaintenanceScripts:    // Apple-blessed periodic routines
+            .safe
+
+        // Real side effects — must show the user what to expect.
+        case .repairDiskPermissions,    // slow; no-op on modern macOS
+             .speedUpMail,              // rebuilds Mail envelope index
+             .rebuildLaunchServices,    // wipes app/file-type DB — hours of broken double-clicks
+             .reindexSpotlight,         // wipes Spotlight index — search dies for hours
+             .thinTimeMachineSnapshots: // deletes local TM snapshots
+            .advanced
+        }
+    }
+
+    /// Plain-English description of what the user will EXPERIENCE during
+    /// and after this task runs. Shown in the confirmation modal before
+    /// an advanced task is dispatched. Always written in the user's voice,
+    /// never in implementation language.
+    public var sideEffects: String {
+        switch self {
+        case .freeUpRAM:
+            "Apps that had memory paged out may take a moment to come back to foreground."
+        case .freeUpPurgeableSpace:
+            "Time Machine local snapshots that macOS already flagged for cleanup are removed; nothing the user actively needs is deleted."
+        case .runMaintenanceScripts:
+            "No visible effect — these are the same scripts macOS runs on its own overnight."
+        case .repairDiskPermissions:
+            "Several minutes of disk activity. On modern macOS (post-El Capitan) this is essentially a no-op since SIP manages permissions automatically."
+        case .verifyStartupDisk:
+            "A few minutes of disk activity. Read-only — nothing on disk is changed regardless of the outcome."
+        case .speedUpMail:
+            "Mail.app's search index is rebuilt from scratch. Mail search and unread counts will be wrong until the rebuild finishes (typically 10–30 minutes on a large mailbox)."
+        case .rebuildLaunchServices:
+            "macOS's database of \"which app opens which file type\" is erased and rebuilt. Until it finishes (often several hours), double-clicking files may fail or open the wrong app, default-app settings may reset, and launching apps via Spotlight may not work. A reboot speeds this up."
+        case .reindexSpotlight:
+            "Spotlight's entire search index is erased and rebuilt. Spotlight search will return empty results for several hours (longer for large home directories). System search and Smart Folders are affected too."
+        case .flushDNSCache:
+            "Browsers and other network apps re-resolve hostnames on next request — milliseconds of impact."
+        case .thinTimeMachineSnapshots:
+            "Local Time Machine snapshots are deleted to free disk space. Remote/backup-drive snapshots are unaffected; you can still restore from the Time Machine backup itself."
+        }
+    }
+
     public var requiresRoot: Bool {
         switch self {
         case .freeUpRAM, .speedUpMail: false

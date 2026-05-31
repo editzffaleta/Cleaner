@@ -92,30 +92,20 @@ final class RemainingSystemJunkE2ETests: XCTestCase {
     }
 
     // MARK: - BrokenLoginItems
-
-    func testBrokenLoginItems_flagsAgentPointingAtDeletedApp() async throws {
-        let id = UUID().uuidString
-        let agent = MCConstants.userLaunchAgents
-            .appending(path: "com.macclean.e2e-broken-\(id).plist")
-        stragglerFiles.append(agent)
-
-        let agentPlist: [String: Any] = [
-            "Label": "com.macclean.e2e.broken.\(id)",
-            "ProgramArguments": ["/Applications/Definitely Not Installed.app/Contents/MacOS/Nope"],
-            "RunAtLoad": true,
-        ]
-        try plant(
-            at: agent,
-            bytes: try PropertyListSerialization.data(
-                fromPropertyList: agentPlist, format: .xml, options: 0
-            )
-        )
-
-        let scan = await SystemJunkModule().scan()
-        let urls = Set(itemsForCategory(.brokenLoginItems, scan: scan).map(\.url))
-        XCTAssertTrue(contains(urls, agent),
-                      "launch agent pointing at deleted app path must be flagged")
-    }
+    //
+    // Intentionally NOT tested end-to-end here. Planting a plist in
+    // ~/Library/LaunchAgents/ triggers macOS's Background Items watcher
+    // before the test's tearDown can remove the file — the user gets a
+    // "<program> can run in the background" system notification every
+    // time the suite runs. Tests that pollute the developer's
+    // Notification Center aren't worth the coverage.
+    //
+    // The filter logic — "agent plist with a non-existent ProgramArguments
+    // path is flagged broken" — is covered by:
+    //   Tests/MacCleanTests/CategoryFilteringIntegrationTests.swift
+    //     testBrokenLoginItems_findsMissingProgram
+    // which calls BrokenLoginItemsCategory.filterBroken directly against
+    // synthetic FileItems, never touching ~/Library/LaunchAgents/.
 
     // MARK: - iOSBackups (TCC-skipped on machines that block writes there)
 

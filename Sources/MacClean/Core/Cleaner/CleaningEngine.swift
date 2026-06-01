@@ -21,6 +21,24 @@ public actor CleaningEngine {
         public let error: String
     }
 
+    /// Per-chunk-boundary snapshot of an in-flight Clean operation.
+    /// The engine emits one of these to `onProgress` after each chunk
+    /// finishes processing — never per-item (would be the perf bottleneck
+    /// for 100k-item runs). The View should treat it as eventually-
+    /// consistent: a final emission with `processedItems == totalItems`
+    /// is the "done" marker for UI purposes, though the actual
+    /// CleanResult arrives via the async return.
+    public struct Progress: Sendable, Equatable {
+        public let totalItems: Int
+        public let processedItems: Int
+        public let removedSoFar: Int
+        public let freedBytesSoFar: UInt64
+
+        public var fraction: Double {
+            totalItems > 0 ? Double(processedItems) / Double(totalItems) : 0
+        }
+    }
+
     private let safetyGuard = SafetyGuard()
     private let logger = Logger(subsystem: MCConstants.bundleIdentifier, category: "CleaningEngine")
 
@@ -35,7 +53,17 @@ public actor CleaningEngine {
     /// (500k) are refused entirely as a runaway-protection — that's
     /// orders of magnitude above any realistic user scenario and signals
     /// a scanner bug rather than user intent.
-    public func clean(items: [FileItem], mode: CleanMode = .trash) async -> CleanResult {
+    ///
+    /// `onProgress` (optional): a Sendable callback invoked once per
+    /// completed chunk with a Progress snapshot. Callers wiring this to
+    /// a SwiftUI @State must hop to the main actor inside the closure
+    /// (the engine runs on its own actor; calling @MainActor-isolated
+    /// setters from the closure body without dispatching is unsafe).
+    public func clean(
+        items: [FileItem],
+        mode: CleanMode = .trash,
+        onProgress: (@Sendable (Progress) -> Void)? = nil
+    ) async -> CleanResult {
         // Upper bound: refuse genuinely runaway selections cleanly.
         if items.count > MCConstants.maxTotalItemsPerCleanOperation {
             let msg = "Operation exceeds limit of \(MCConstants.maxTotalItemsPerCleanOperation) items (attempted: \(items.count)). This usually indicates a scanner bug."
@@ -61,6 +89,7 @@ public actor CleaningEngine {
         // when we add a progress channel in a follow-up release).
         let chunkSize = MCConstants.cleanChunkSize
         var startIndex = 0
+        var processedSoFar = 0
         while startIndex < items.count {
             if Task.isCancelled { break }
             let endIndex = min(startIndex + chunkSize, items.count)
@@ -74,6 +103,17 @@ public actor CleaningEngine {
                 errors: &errors,
                 skippedCount: &skippedCount
             )
+            processedSoFar += chunk.count
+
+            // Emit per-chunk progress so the UI can render an honest
+            // progress bar on long runs. Per-item emission would itself
+            // become the bottleneck.
+            onProgress?(Progress(
+                totalItems: items.count,
+                processedItems: processedSoFar,
+                removedSoFar: removedCount,
+                freedBytesSoFar: freedBytes
+            ))
 
             // Give the runloop room to breathe between chunks.
             await Task.yield()

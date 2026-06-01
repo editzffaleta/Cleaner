@@ -28,7 +28,8 @@ public enum CleanActions {
     public static func executeUserClean(
         results: [ScanResult],
         selectedItems: Set<URL>,
-        engine: CleaningEngine
+        engine: CleaningEngine,
+        onProgress: (@Sendable (CleaningEngine.Progress) -> Void)? = nil
     ) async -> CleaningEngine.CleanResult {
         var trashItems: [FileItem] = []
         var thinItems: [FileItem] = []
@@ -42,7 +43,8 @@ public enum CleanActions {
             }
         }
 
-        let trashResult = await engine.clean(items: trashItems, mode: .trash)
+        let trashResult = await engine.clean(items: trashItems, mode: .trash,
+                                             onProgress: onProgress)
         let thinResult = await thinSelectedBinaries(thinItems)
         return CleaningEngine.CleanResult(
             removedCount: trashResult.removedCount + thinResult.removedCount,
@@ -101,9 +103,11 @@ public enum CleanActions {
     public static func executeUserClean(
         items: [FileItem],
         selectedItems: Set<URL>,
-        engine: CleaningEngine
+        engine: CleaningEngine,
+        onProgress: (@Sendable (CleaningEngine.Progress) -> Void)? = nil
     ) async -> CleaningEngine.CleanResult {
         let filtered = items.filter { selectedItems.contains($0.url) }
-        return await engine.clean(items: filtered, mode: .trash)
+        return await engine.clean(items: filtered, mode: .trash,
+                                  onProgress: onProgress)
     }
 }

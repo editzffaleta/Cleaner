@@ -209,6 +209,91 @@ final class CleaningEngineTests: XCTestCase {
         )
     }
 
+    // MARK: - Spec: progress reporting
+
+    /// SPEC: when an `onProgress` callback is supplied, the engine emits
+    /// at chunk boundaries. The callback is invoked with monotonically
+    /// non-decreasing `processedItems`. Final callback's processedItems
+    /// equals totalItems for a non-cancelled run.
+    func testEngine_emitsProgressAtChunkBoundaries() async {
+        let items = (0..<15_000).map {
+            FileItem(
+                url: MCConstants.userCaches.appending(path: "progress-spec-\($0)"),
+                name: "f\($0)",
+                size: 1,
+                allocatedSize: 1,
+                isDirectory: false
+            )
+        }
+
+        // Capture all emissions via a thread-safe collector.
+        let collector = ProgressCollector()
+        let result = await CleaningEngine().clean(
+            items: items, mode: .dryRun,
+            onProgress: { progress in collector.append(progress) }
+        )
+
+        XCTAssertEqual(result.removedCount, 15_000)
+
+        let snapshots = await collector.snapshots
+        XCTAssertGreaterThanOrEqual(snapshots.count, 3,
+            "15k items with chunk size 5k should emit at least 3 progress snapshots")
+        XCTAssertEqual(snapshots.last?.processedItems, 15_000,
+            "final emission must report totalItems processed for a non-cancelled run")
+        // Monotonicity
+        var lastProcessed = -1
+        for snap in snapshots {
+            XCTAssertEqual(snap.totalItems, 15_000,
+                "totalItems must be stable across emissions")
+            XCTAssertGreaterThanOrEqual(snap.processedItems, lastProcessed,
+                "processedItems must never decrease")
+            lastProcessed = snap.processedItems
+        }
+    }
+
+    /// SPEC: progress emission stops on cancellation. The last emitted
+    /// snapshot before the cancel has processedItems < totalItems.
+    func testEngine_progressStopsOnCancellation() async throws {
+        let items = (0..<60_000).map {
+            FileItem(
+                url: MCConstants.userCaches.appending(path: "cancel-progress-\($0)"),
+                name: "f\($0)",
+                size: 1,
+                allocatedSize: 1,
+                isDirectory: false
+            )
+        }
+
+        let collector = ProgressCollector()
+        let engine = CleaningEngine()
+        let task = Task {
+            await engine.clean(items: items, mode: .dryRun,
+                               onProgress: { collector.append($0) })
+        }
+        try await Task.sleep(for: .milliseconds(5))
+        task.cancel()
+        _ = await task.value
+
+        let snapshots = await collector.snapshots
+        // Some progress may have emitted (a chunk or two) before cancel.
+        // The KEY assertion: progress did NOT report 100% completion.
+        if let last = snapshots.last {
+            XCTAssertLessThan(last.processedItems, last.totalItems,
+                "after cancellation, the last progress snapshot must reflect a partial state")
+        }
+    }
+
+    /// Sendable thread-safe collector for progress snapshots emitted from
+    /// the engine actor. Plain array + lock keeps the callback Sendable
+    /// without dragging an actor type into the test setup.
+    private actor ProgressCollector {
+        private(set) var snapshots: [CleaningEngine.Progress] = []
+        nonisolated func append(_ p: CleaningEngine.Progress) {
+            Task { await self.add(p) }
+        }
+        private func add(_ p: CleaningEngine.Progress) { snapshots.append(p) }
+    }
+
     /// SPEC: if the surrounding Task is cancelled mid-cleanup, the engine
     /// stops at the next safe boundary and returns a partial result —
     /// it doesn't hang or run to completion.

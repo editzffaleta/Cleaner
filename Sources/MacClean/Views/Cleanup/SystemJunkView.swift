@@ -5,6 +5,7 @@ struct SystemJunkView: View {
     @Environment(AppState.self) private var appState
     @State private var viewModel = SystemJunkViewModel()
     @State private var showLargeSelectionConfirm = false
+    @State private var showActivityLog = false
 
     var body: some View {
         Group {
@@ -278,11 +279,25 @@ struct SystemJunkView: View {
                 }
             }
 
-            Button("Done") { viewModel.reset() }
-                .buttonStyle(.bordered)
-                .tint(.white)
-                .controlSize(.large)
+            HStack(spacing: 10) {
+                if summary.errorCount > 0 {
+                    Button {
+                        showActivityLog = true
+                    } label: {
+                        Label("View Log", systemImage: "doc.text.magnifyingglass")
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.white)
+                    .controlSize(.large)
+                    .help("Open the activity log to see every error and copy details for a bug report")
+                }
+                Button("Done") { viewModel.reset() }
+                    .buttonStyle(.bordered)
+                    .tint(.white)
+                    .controlSize(.large)
+            }
             Spacer()
         }
+        .sheet(isPresented: $showActivityLog) { LogViewerView() }
     }
 }

@@ -63,6 +63,7 @@ struct ModuleContainerView: View {
     }
 
     @State private var showLargeSelectionConfirm = false
+    @State private var showActivityLog = false
 
     private var totalSelected: UInt64 {
         results.flatMap(\.items)
@@ -311,11 +312,25 @@ struct ModuleContainerView: View {
                 }
             }
 
-            Button("Done") { onReset() }
-                .buttonStyle(.bordered)
-                .tint(.white)
-                .controlSize(.large)
+            HStack(spacing: 10) {
+                if summary.errorCount > 0 {
+                    Button {
+                        showActivityLog = true
+                    } label: {
+                        Label("View Log", systemImage: "doc.text.magnifyingglass")
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.white)
+                    .controlSize(.large)
+                    .help("Open the activity log to see every error and copy details for a bug report")
+                }
+                Button("Done") { onReset() }
+                    .buttonStyle(.bordered)
+                    .tint(.white)
+                    .controlSize(.large)
+            }
             Spacer()
         }
+        .sheet(isPresented: $showActivityLog) { LogViewerView() }
     }
 }

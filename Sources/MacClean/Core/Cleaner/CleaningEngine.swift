@@ -166,42 +166,118 @@ public actor CleaningEngine {
                 continue
             }
 
+            // For directories, totalFileAllocatedSize doesn't recurse —
+            // Apple's API returns 0 for dirs. Compute the real on-disk
+            // size by walking the subtree BEFORE we trash it (after,
+            // the path is gone). Without this, freedBytes massively
+            // undercounts: trashing ~/Library/Caches/com.foo/ shows
+            // "Zero KB freed" even when the dir held 200 MB.
+            let realSize: UInt64 = item.isDirectory
+                ? Self.recursiveAllocatedSize(of: item.url)
+                : item.size
+
             switch mode {
             case .dryRun:
                 removedCount += 1
-                freedBytes += item.size
-                logOperation(path: item.url, size: item.size, dryRun: true)
+                freedBytes += realSize
+                logOperation(path: item.url, size: realSize, dryRun: true)
 
             case .trash:
                 do {
                     try FileManager.default.trashItem(at: item.url, resultingItemURL: nil)
                     removedCount += 1
-                    freedBytes += item.size
-                    logOperation(path: item.url, size: item.size, dryRun: false)
+                    freedBytes += realSize
+                    logOperation(path: item.url, size: realSize, dryRun: false)
+                } catch let nsError as NSError where Self.isBenignMissingFile(nsError) {
+                    // Cache churn: scanner saw the file, but a daemon
+                    // (or our own earlier processing) removed it before
+                    // we got here. Not a failure to surface to the user.
+                    skippedCount += 1
+                    logSkip(path: item.url, reason: "already gone")
                 } catch {
+                    let msg = error.localizedDescription
                     errors.append(CleanError(
-                        path: item.url.path(percentEncoded: false),
-                        error: error.localizedDescription
+                        path: item.url.path(percentEncoded: false), error: msg
                     ))
+                    logError(path: item.url, reason: msg)
                 }
 
             case .permanent:
                 do {
                     try FileManager.default.removeItem(at: item.url)
                     removedCount += 1
-                    freedBytes += item.size
-                    logOperation(path: item.url, size: item.size, dryRun: false)
+                    freedBytes += realSize
+                    logOperation(path: item.url, size: realSize, dryRun: false)
+                } catch let nsError as NSError where Self.isBenignMissingFile(nsError) {
+                    skippedCount += 1
+                    logSkip(path: item.url, reason: "already gone")
                 } catch {
+                    let msg = error.localizedDescription
                     errors.append(CleanError(
-                        path: item.url.path(percentEncoded: false),
-                        error: error.localizedDescription
+                        path: item.url.path(percentEncoded: false), error: msg
                     ))
+                    logError(path: item.url, reason: msg)
                 }
             }
         }
     }
 
+    /// Walks `url` recursively (using FileManager.enumerator) and sums
+    /// per-file allocated sizes. Returns 0 if the URL doesn't exist
+    /// or the enumeration fails.
+    private static func recursiveAllocatedSize(of url: URL) -> UInt64 {
+        let fm = FileManager.default
+        guard let enumerator = fm.enumerator(
+            at: url,
+            includingPropertiesForKeys: [.totalFileAllocatedSizeKey, .isRegularFileKey],
+            options: []
+        ) else { return 0 }
+
+        var total: UInt64 = 0
+        for case let fileURL as URL in enumerator {
+            let values = try? fileURL.resourceValues(forKeys: [
+                .totalFileAllocatedSizeKey, .isRegularFileKey,
+            ])
+            if values?.isRegularFile == true {
+                total += UInt64(values?.totalFileAllocatedSize ?? 0)
+            }
+        }
+        return total
+    }
+
+    /// True if the error is "file doesn't exist" — benign because cache
+    /// daemons regenerate constantly; a file the scanner saw 30s ago may
+    /// already be gone, and that's not a "user-facing error."
+    private static func isBenignMissingFile(_ error: NSError) -> Bool {
+        if error.domain == NSCocoaErrorDomain &&
+           (error.code == NSFileNoSuchFileError ||
+            error.code == NSFileReadNoSuchFileError) {
+            return true
+        }
+        if error.domain == NSPOSIXErrorDomain && error.code == Int(ENOENT) {
+            return true
+        }
+        return false
+    }
+
     private nonisolated func logOperation(path: URL, size: UInt64, dryRun: Bool) {
+        let sizeStr = ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file)
+        let prefix = dryRun ? "[DRY-RUN]" : "[REMOVED]"
+        appendLogLine("\(prefix) \(path.path(percentEncoded: false)) (\(sizeStr))")
+    }
+
+    private nonisolated func logError(path: URL, reason: String) {
+        appendLogLine("[ERROR] \(path.path(percentEncoded: false)) — \(reason)")
+    }
+
+    private nonisolated func logSkip(path: URL, reason: String) {
+        appendLogLine("[SKIP] \(path.path(percentEncoded: false)) — \(reason)")
+    }
+
+    /// Appends a timestamped line to `operations.log`. Best-effort —
+    /// any I/O failure here is silent because we never want logging to
+    /// abort the cleanup it's narrating.
+    private nonisolated func appendLogLine(_ body: String) {
         let fm = FileManager.default
         let logDir = MCConstants.operationLogDir
         let logFile = MCConstants.operationLogFile
@@ -211,20 +287,17 @@ public actor CleaningEngine {
         }
 
         let timestamp = ISO8601DateFormatter().string(from: Date())
-        let prefix = dryRun ? "[DRY-RUN]" : "[REMOVED]"
-        let sizeStr = ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file)
-        let line = "\(timestamp) \(prefix) \(path.path(percentEncoded: false)) (\(sizeStr))\n"
+        let line = "\(timestamp) \(body)\n"
 
-        if let data = line.data(using: .utf8) {
-            if fm.fileExists(atPath: logFile.path(percentEncoded: false)) {
-                if let handle = try? FileHandle(forWritingTo: logFile) {
-                    handle.seekToEndOfFile()
-                    handle.write(data)
-                    handle.closeFile()
-                }
-            } else {
-                try? data.write(to: logFile)
+        guard let data = line.data(using: .utf8) else { return }
+        if fm.fileExists(atPath: logFile.path(percentEncoded: false)) {
+            if let handle = try? FileHandle(forWritingTo: logFile) {
+                handle.seekToEndOfFile()
+                handle.write(data)
+                handle.closeFile()
             }
+        } else {
+            try? data.write(to: logFile)
         }
     }
 }

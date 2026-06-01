@@ -117,7 +117,12 @@ final class CleaningEngineTests: XCTestCase {
 
     // MARK: - Error handling
 
-    func testMissingFileGracefullySkipped() async throws {
+    /// SPEC: a file the scanner saw but that's gone by clean time
+    /// (typical for cache daemons that regenerate constantly) is a
+    /// benign skip, NOT a user-visible error. Cache churn is normal;
+    /// surfacing thousands of "no such file" errors mislead the user
+    /// into thinking the cleanup was broken when nothing was wrong.
+    func testMissingFileIsBenignSkip_notError() async throws {
         let dir = try Self.makeTestDir()
         defer { Self.cleanupTestDir(dir) }
 
@@ -127,8 +132,10 @@ final class CleaningEngineTests: XCTestCase {
             mode: .trash
         )
 
-        // Engine reports an error for the missing file but doesn't crash.
-        XCTAssertEqual(result.errors.count, 1)
+        XCTAssertEqual(result.errors.count, 0,
+            "missing files between scan and clean must be silent skips, " +
+            "not user-facing errors — cache daemons churn constantly")
+        XCTAssertEqual(result.skippedCount, 1, "the missing file is counted as skipped")
         XCTAssertEqual(result.removedCount, 0)
     }
 

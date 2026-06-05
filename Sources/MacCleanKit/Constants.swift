@@ -171,6 +171,13 @@ public enum MCConstants {
     public static let operationLogDir = userLogs.appending(path: "MacClean")
     public static let operationLogFile = operationLogDir.appending(path: "operations.log")
 
+    // MARK: - Project links
+
+    public static let repoURL = URL(string: "https://github.com/iliyami/MacSai")!
+    public static let issuesURL = URL(string: "https://github.com/iliyami/MacSai/issues/new/choose")!
+    public static let releasesURL = URL(string: "https://github.com/iliyami/MacSai/releases")!
+    public static let latestReleaseAPI = URL(string: "https://api.github.com/repos/iliyami/MacSai/releases/latest")!
+
     // MARK: - App version
     //
     // Bumped alongside the VERSION file at the repo root. CI verifies the
@@ -179,5 +186,5 @@ public enum MCConstants {
     // plugin was tried (commit history) but doesn't work under multi-arch
     // `swift build --arch arm64 --arch x86_64` because xcbuild doesn't
     // execute plugins.
-    public static let appVersion = "1.9.0"
+    public static let appVersion = "1.10.0"
 }

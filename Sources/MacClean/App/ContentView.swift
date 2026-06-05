@@ -48,19 +48,70 @@ struct ContentView: View {
                     Text("Select a module from the sidebar")
                         .foregroundStyle(.secondary)
                 }
+
+                // Centered title, drawn as plain content in the title bar
+                // region. Not a ToolbarItem: macOS 26 wraps toolbar items in
+                // a Liquid Glass capsule we don't want, and the unified
+                // toolbar pins its own title to the leading edge (system
+                // title hidden via TitleBarConfigurator; the window keeps
+                // its real title for Mission Control/VoiceOver).
+                VStack {
+                    Text(MCConstants.appName)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.92))
+                        .padding(.top, 16)
+                    Spacer()
+                }
+                .ignoresSafeArea(edges: .top)
+                .allowsHitTesting(false)
             }
             .toolbarBackground(.hidden, for: .windowToolbar)
         }
-        .navigationTitle(MCConstants.appName)
-        // Native macOS pattern: small grey second line under the title.
-        // MCConstants.appVersion is checked against VERSION by CI
-        // (scripts/check-version-sync.sh) — drifting between the two
-        // fails the build.
-        .navigationSubtitle("v\(MCConstants.appVersion)")
+        .background(TitleBarConfigurator())
+        // Empty: the system-drawn title pins to the leading edge and on
+        // macOS 26 ignores titleVisibility re-asserts while SwiftUI owns a
+        // non-empty title. The visible (centered) title is drawn by the
+        // detail-pane overlay; the real NSWindow.title is set by
+        // TitleBarConfigurator so Mission Control/VoiceOver keep the name.
+        .navigationTitle("")
         // Mark the current selection visited (runs initially too) so its view
         // is created on first visit and then retained.
         .onChange(of: appState.selectedSidebarItem, initial: true) { _, newValue in
             if let newValue { visited.insert(newValue) }
+        }
+    }
+
+    /// Hides the system-drawn window title once the view lands in a window.
+    /// The title string itself stays set (Mission Control, App Exposé, and
+    /// VoiceOver still read it); only the toolbar's leading-edge rendering
+    /// is suppressed, replaced by the centered principal toolbar item above.
+    private struct TitleBarConfigurator: NSViewRepresentable {
+        func makeNSView(context: Context) -> NSView { ConfiguringView() }
+
+        // Re-assert on every SwiftUI update. SwiftUI's navigationTitle is
+        // empty (it kept drawing a leading-edge title on macOS 26), so the
+        // real window title lives here: Mission Control, App Exposé, the
+        // Window menu, and VoiceOver read NSWindow.title; titleVisibility
+        // keeps it out of the toolbar where the overlay draws instead.
+        static func apply(to window: NSWindow?) {
+            guard let window else { return }
+            window.title = MCConstants.appName
+            window.titleVisibility = .hidden
+        }
+
+        func updateNSView(_ nsView: NSView, context: Context) {
+            DispatchQueue.main.async { [weak nsView] in
+                Self.apply(to: nsView?.window)
+            }
+        }
+
+        private final class ConfiguringView: NSView {
+            override func viewDidMoveToWindow() {
+                super.viewDidMoveToWindow()
+                DispatchQueue.main.async { [weak self] in
+                    TitleBarConfigurator.apply(to: self?.window)
+                }
+            }
         }
     }
 
@@ -95,6 +146,8 @@ struct ContentView: View {
             DuplicatesView()
         case .shredder:
             ShredderView()
+        case .settings:
+            SettingsPageView()
         }
     }
 }

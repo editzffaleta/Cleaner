@@ -38,9 +38,15 @@ struct MacCleanApp: App {
         }
         .windowStyle(.titleBar)
         .defaultSize(width: 960, height: 620)
-
-        Settings {
-            SettingsView()
+        // Keep the standard "Settings…" menu item + Cmd-comma, but route
+        // them to the in-app page (the separate Settings window is gone).
+        .commands {
+            CommandGroup(replacing: .appSettings) {
+                Button("Settings…") {
+                    appState.selectedSidebarItem = .settings
+                }
+                .keyboardShortcut(",", modifiers: .command)
+            }
         }
     }
 
@@ -56,12 +62,14 @@ struct MacCleanApp: App {
             // showMenuBarWidget already defaults to true; setEnabled is
             // idempotent if already registered.
         }
-        MenuBarLauncher.shared.setEnabled(showMenuBarWidget)
+        // Async: the SMAppService XPC round-trip must not block app launch.
+        Task { await MenuBarLauncher.shared.setEnabled(showMenuBarWidget) }
     }
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
+        AppearanceManager.applyStored()
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
     }

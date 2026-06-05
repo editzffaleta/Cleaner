@@ -35,6 +35,18 @@ public final class MenuBarLauncher {
 
     public internal(set) var lastError: LauncherError?
 
+    /// True while a register/unregister XPC round-trip is in flight; the
+    /// Settings toggle shows a spinner and disables itself instead of
+    /// blocking the main thread on backgroundtaskmanagementd.
+    public internal(set) var isBusy = false
+
+    /// Observable mirror of `service.status`, refreshed after every
+    /// `setEnabled` operation. `SMAppService.status` is a live computed
+    /// value with no change notifications; the old Settings UI force-
+    /// rebuilt the whole Form (`.id(refreshTick)`) to work around that,
+    /// which is exactly the jank this snapshot removes.
+    public internal(set) var statusSnapshot: SMAppService.Status = .notRegistered
+
     private let service = SMAppService.loginItem(identifier: MCConstants.menuBundleIdentifier)
 
     public var isRegistered: Bool {
@@ -45,7 +57,9 @@ public final class MenuBarLauncher {
         service.status
     }
 
-    private init() {}
+    private init() {
+        statusSnapshot = service.status
+    }
 
     public func register() throws {
         do {
@@ -86,13 +100,43 @@ public final class MenuBarLauncher {
     /// but won't kick it off in the current session. We want the
     /// widget visible the moment the toggle flips, so we kick it
     /// directly via NSWorkspace. Idempotent: skips if already running.
-    public func setEnabled(_ enabled: Bool) {
+    /// Minimum time `isBusy` stays true. The XPC round-trip often finishes
+    /// in tens of ms; a spinner that flashes in and out for one frame reads
+    /// as a glitch, not feedback. Holding it for a beat makes the toggle
+    /// feel deliberate.
+    static let minimumBusyDuration: Duration = .milliseconds(450)
+
+    public func setEnabled(_ enabled: Bool) async {
+        isBusy = true
+        let started = ContinuousClock.now
+        defer { isBusy = false }
+        // register()/unregister() block on an XPC round-trip to
+        // backgroundtaskmanagementd (the visible "toggle lag"), so they run
+        // off the main actor. The detached task touches no @MainActor state
+        // (issue #58 rule); results come back here, on the main actor.
+        let failure: String? = await Task.detached(priority: .userInitiated) {
+            let service = SMAppService.loginItem(identifier: MCConstants.menuBundleIdentifier)
+            do {
+                if enabled { try service.register() } else { try service.unregister() }
+                return nil
+            } catch {
+                return error.localizedDescription
+            }
+        }.value
+        lastError = failure.map {
+            enabled ? .registrationFailed($0) : .unregisterFailed($0)
+        }
         if enabled {
-            try? register()
             launchHelperIfNotRunning()
         } else {
-            try? unregister()
             terminateRunningHelper()
+        }
+        statusSnapshot = service.status
+        // Pad sub-minimum operations so the spinner doesn't flash for a
+        // single frame (see minimumBusyDuration).
+        let elapsed = ContinuousClock.now - started
+        if elapsed < Self.minimumBusyDuration {
+            try? await Task.sleep(for: Self.minimumBusyDuration - elapsed)
         }
     }
 

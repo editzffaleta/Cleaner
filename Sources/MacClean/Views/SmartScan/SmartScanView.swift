@@ -129,7 +129,7 @@ struct SmartScanView: View {
                     }
                 }
                 .padding(.horizontal, 20)
-                .padding(.bottom, 20)
+                .padding(.vertical, 20)
             }
             .background {
                 if removeBackgroundColors { Color.clear }
@@ -242,8 +242,10 @@ struct SmartScanView: View {
                 }
             }
 
+            // Fill the remaining height so the list is tall enough to review
+            // comfortably (issue #85), instead of a short fixed box.
             FileListView(results: cleanResults, selectedItems: $selectedItems)
-                .frame(maxHeight: 280)
+                .frame(maxHeight: .infinity)
                 .background {
                     if removeBackgroundColors { Color.clear }
                     else { Rectangle().fill(.ultraThinMaterial) }
@@ -251,10 +253,18 @@ struct SmartScanView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .padding(.horizontal, 20)
 
-            Button("Clean") { showCleanConfirm = true }
+            // Footer: running selection on the left, the clean action on the right.
+            HStack {
+                Text("\(selectedItems.count)/\(totalCleanItems) selected")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.7))
+                Spacer()
+                Button { showCleanConfirm = true } label: {
+                    Text("Clean · \(FileSizeFormatter.format(selectedCleanSize))")
+                }
                 .buttonStyle(SuperEllipseButtonStyle(
                     gradient: ModuleTheme.smartScan.buttonGradient,
-                    size: CGSize(width: 140, height: 46)
+                    size: CGSize(width: 200, height: 46)
                 ))
                 .disabled(selectedItems.isEmpty)
                 .opacity(selectedItems.isEmpty ? 0.5 : 1)
@@ -264,9 +274,25 @@ struct SmartScanView: View {
                 } message: {
                     Text("Selected items will be moved to the Trash so you can recover them if needed.")
                 }
-                .padding(.bottom, 24)
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 24)
         }
         .padding(.horizontal, 20)
+    }
+
+    /// Total number of cleanable items found (across all categories).
+    private var totalCleanItems: Int {
+        cleanResults.reduce(0) { $0 + $1.items.count }
+    }
+
+    /// On-disk size of the currently selected items, for the footer button.
+    private var selectedCleanSize: UInt64 {
+        cleanResults.reduce(into: UInt64(0)) { total, result in
+            for item in result.items where selectedItems.contains(item.url) {
+                total += item.size
+            }
+        }
     }
 
     // MARK: - Empty / Done / Cleaning

@@ -180,8 +180,7 @@ Mac Sai 的设计目标是**绝不造成数据丢失**：
 ### Homebrew（推荐，一条命令，无任何警告）
 
 ```bash
-brew tap iliyami/macsai
-brew install --cask mac-sai
+brew tap iliyami/macsai && brew install --cask mac-sai
 ```
 
 Mac Sai 已经过 Apple 公证，可从聚焦或“应用程序”直接启动，没有警告、无需右键、也无需命令行。

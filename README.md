@@ -180,8 +180,7 @@ Mac Sai is designed to **never cause data loss**:
 ### Homebrew (recommended — one command, no warnings)
 
 ```bash
-brew tap iliyami/macsai
-brew install --cask mac-sai
+brew tap iliyami/macsai && brew install --cask mac-sai
 ```
 
 Mac Sai is notarized by Apple, so it launches from Spotlight or Applications with no warnings, no right-clicks, and no commands.

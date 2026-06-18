@@ -19,7 +19,7 @@ struct SettingsPageView: View {
     @AppStorage("showMenuBarWidget") private var showMenuBarWidget = true
     @AppStorage("launchAtLogin") private var launchAtLogin = false
     @AppStorage("removeBackgroundColors") private var removeBackgroundColors = false
-    @AppStorage(AppearanceManager.defaultsKey) private var appearanceRaw = AppearanceMode.system.rawValue
+    @AppStorage(AppearanceManager.defaultsKey) private var appearanceRaw = AppearanceMode.dark.rawValue
     @AppStorage(AppLanguage.defaultsKey, store: SharedAppState.defaults) private var appLanguageRaw = AppLanguage.system.rawValue
     @State private var launcher = MenuBarLauncher.shared
     @State private var loginLauncher = LaunchAtLoginManager.shared

@@ -42,7 +42,10 @@ public enum AppearanceManager {
 
     public static var storedMode: AppearanceMode {
         let raw = UserDefaults.standard.string(forKey: defaultsKey) ?? ""
-        return AppearanceMode(rawValue: raw) ?? .system
+        // Default to Dark when the user hasn't chosen: the app is designed
+        // dark-first, so it should open dark out of the box regardless of the
+        // system setting. Picking "System" opts back into following the OS.
+        return AppearanceMode(rawValue: raw) ?? .dark
     }
 
     public static func applyStored() {

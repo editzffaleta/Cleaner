@@ -19,6 +19,9 @@ public enum ScanCategory: String, CaseIterable, Identifiable, Sendable {
     case unusedDiskImages = "unused_disk_images"
     case incompleteDownloads = "incomplete_downloads"
     case appLeftovers = "app_leftovers"
+    case packageManagerCaches = "package_manager_caches"
+    case ideCaches = "ide_caches"
+    case aiToolCaches = "ai_tool_caches"
 
     // Mail
     case mailAttachments = "mail_attachments"
@@ -57,6 +60,9 @@ public enum ScanCategory: String, CaseIterable, Identifiable, Sendable {
         case .unusedDiskImages: L10n.tr("未使用的磁盘映像", "Unused Disk Images")
         case .incompleteDownloads: L10n.tr("未完成下载", "Incomplete Downloads")
         case .appLeftovers: L10n.tr("已删除应用的残留文件", "Leftovers from Deleted Apps")
+        case .packageManagerCaches: L10n.tr("包管理器缓存", "Package Manager Caches")
+        case .ideCaches: L10n.tr("IDE 与编辑器缓存", "IDE & Editor Caches")
+        case .aiToolCaches: L10n.tr("AI 工具缓存", "AI Tool Caches")
         case .mailAttachments: L10n.tr("邮件附件", "Mail Attachments")
         case .trashBins: L10n.tr("废纸篓", "Trash Bins")
         case .malware: L10n.tr("恶意软件", "Malware")
@@ -88,6 +94,9 @@ public enum ScanCategory: String, CaseIterable, Identifiable, Sendable {
         case .unusedDiskImages: L10n.tr("曾经挂载但已不再需要的磁盘映像。", "Disk images you mounted once and forgot.")
         case .incompleteDownloads: L10n.tr("未下载完成的文件。", "Partially downloaded files.")
         case .appLeftovers: L10n.tr("已删除应用留下的支持文件。", "Support files from apps you've deleted.")
+        case .packageManagerCaches: L10n.tr("npm、Cargo、pip、Homebrew、Gradle 的可重建缓存。", "Regenerable caches from npm, Cargo, pip, Homebrew, and Gradle.")
+        case .ideCaches: L10n.tr("代码编辑器的缓存（Cursor、Antigravity 等）。", "Caches from code editors like Cursor and Antigravity.")
+        case .aiToolCaches: L10n.tr("AI 编码工具的缓存（Claude、Codex）；不含历史与会话。", "Caches from AI coding tools (Claude, Codex). History and sessions excluded.")
         case .mailAttachments: L10n.tr("邮件附件的缓存副本。", "Saved copies of Mail attachments.")
         case .trashBins: L10n.tr("当前位于废纸篓中的项目。", "Items currently sitting in the Trash.")
         case .malware: L10n.tr("在磁盘上发现的已知恶意文件。", "Known malicious files found on disk.")
@@ -115,6 +124,9 @@ public enum ScanCategory: String, CaseIterable, Identifiable, Sendable {
         case .deletedUsers: "person.crop.circle.badge.minus"
         case .unusedDiskImages: "opticaldisc"
         case .appLeftovers: "shippingbox.and.arrow.backward"
+        case .packageManagerCaches: "shippingbox"
+        case .ideCaches: "macwindow"
+        case .aiToolCaches: "sparkles"
         case .mailAttachments: "paperclip"
         case .trashBins: "trash"
         case .malware: "shield.lefthalf.filled.trianglebadge.exclamationmark"
@@ -129,7 +141,8 @@ public enum ScanCategory: String, CaseIterable, Identifiable, Sendable {
     public var autoSelect: Bool {
         switch self {
         case .unusedDiskImages, .largeFiles, .oldFiles, .duplicates,
-             .universalBinaries, .appLeftovers:
+             .universalBinaries, .appLeftovers,
+             .packageManagerCaches, .ideCaches, .aiToolCaches:
             // appLeftovers: deletes another app's leftover data; detection is
             // conservative but never auto-checked — the user reviews first.
             // universalBinaries: thinning rewrites the app's binaries in

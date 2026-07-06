@@ -22,16 +22,18 @@ enum ScheduledCleanupRunner {
         }
     }
 
-    static func perform(engine: CleaningEngine) async {
+    @discardableResult
+    static func perform(engine: CleaningEngine, source: String = CleanHistorySource.scheduled) async -> CleaningEngine.CleanResult {
+        let empty = CleaningEngine.CleanResult(removedCount: 0, freedBytes: 0, errors: [], skippedCount: 0)
         let results = await SystemJunkModule().scan()
         let safe = results.filter { $0.autoSelect && !$0.items.isEmpty }
-        guard !safe.isEmpty else { return }
+        guard !safe.isEmpty else { return empty }
         let selection = Set(safe.flatMap { $0.items.map(\.url) })
-        _ = await CleanActions.executeUserClean(
+        return await CleanActions.executeUserClean(
             results: safe,
             selectedItems: selection,
             engine: engine,
-            source: CleanHistorySource.scheduled
+            source: source
         )
     }
 }

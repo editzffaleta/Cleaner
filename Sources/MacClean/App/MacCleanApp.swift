@@ -48,14 +48,22 @@ struct MacCleanApp: App {
                     syncMenuBarOnLaunch()
                 }
                 .onOpenURL { url in
-                    // Expect exactly macclean://module/<slug> — one path
-                    // segment (pathComponents is ["/", "<slug>"]). Reject
-                    // malformed multi-segment URLs rather than guessing.
-                    guard url.scheme == "macclean", url.host == "module",
-                          url.pathComponents.count == 2,
-                          let id = url.pathComponents.last,
-                          let item = SidebarItem(deepLinkID: id) else { return }
-                    appState.selectedSidebarItem = item
+                    // Two shapes: macclean://module/<slug> navigates; and
+                    // macclean://action/<name> runs a one-tap action from the
+                    // menu-bar widget. Both have exactly one path segment
+                    // (pathComponents is ["/", "<value>"]).
+                    guard url.scheme == "macclean", url.pathComponents.count == 2,
+                          let value = url.pathComponents.last else { return }
+                    switch url.host {
+                    case "module":
+                        if let item = SidebarItem(deepLinkID: value) {
+                            appState.selectedSidebarItem = item
+                        }
+                    case "action":
+                        handleWidgetAction(value)
+                    default:
+                        break
+                    }
                 }
         }
         .windowStyle(.titleBar)
@@ -78,6 +86,20 @@ struct MacCleanApp: App {
     /// macOS occasionally drops registrations after updates, especially
     /// when the helper bundle path changes (which it doesn't here, but
     /// re-registering is cheap and idempotent).
+    /// One-tap actions sent by the menu-bar widget as macclean://action/<name>.
+    @MainActor
+    private func handleWidgetAction(_ name: String) {
+        switch name {
+        case "quick-clean":
+            // Show the history (which updates live) and run a safe clean now.
+            appState.selectedSidebarItem = .cleanupHistory
+            let engine = appState.cleaningEngine
+            Task { await ScheduledCleanupRunner.perform(engine: engine, source: CleanHistorySource.widget) }
+        default:
+            break
+        }
+    }
+
     private func syncMenuBarOnLaunch() {
         if !menuBarFirstLaunchDone {
             menuBarFirstLaunchDone = true

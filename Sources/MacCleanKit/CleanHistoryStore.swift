@@ -1,5 +1,10 @@
 import Foundation
 
+public extension Notification.Name {
+    /// Posted whenever a clean is recorded, so the history screen can refresh live.
+    static let cleanHistoryUpdated = Notification.Name("com.macclean.cleanHistoryUpdated")
+}
+
 /// One recorded clean operation, shown in the Cleanup History screen.
 public struct CleanHistoryEntry: Codable, Identifiable, Sendable, Equatable {
     public let id: UUID
@@ -46,6 +51,7 @@ public enum CleanHistoryStore {
         entries.append(CleanHistoryEntry(date: date, freedBytes: freedBytes, removedCount: removedCount, source: source))
         if entries.count > maxEntries { entries.removeFirst(entries.count - maxEntries) }
         saveLocked(entries)
+        NotificationCenter.default.post(name: .cleanHistoryUpdated, object: nil)
     }
 
     /// All entries, newest first.

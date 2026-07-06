@@ -127,4 +127,12 @@ public extension TipAction {
         }
         NSWorkspace.shared.open(url)
     }
+
+    /// Fire a one-tap action in the main app via `macclean://action/<name>`
+    /// (e.g. "quick-clean"). Falls back to just opening the app.
+    @MainActor
+    static func runAction(_ name: String) {
+        guard let url = URL(string: "macclean://action/\(name)") else { open(); return }
+        NSWorkspace.shared.open(url)
+    }
 }

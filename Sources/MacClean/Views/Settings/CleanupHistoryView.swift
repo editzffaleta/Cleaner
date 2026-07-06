@@ -30,6 +30,9 @@ struct CleanupHistoryView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .task { entries = CleanHistoryStore.all() }
+        .onReceive(NotificationCenter.default.publisher(for: .cleanHistoryUpdated).receive(on: RunLoop.main)) { _ in
+            entries = CleanHistoryStore.all()
+        }
     }
 
     // MARK: Header

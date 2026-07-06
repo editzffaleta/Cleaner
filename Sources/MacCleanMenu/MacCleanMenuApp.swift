@@ -262,11 +262,11 @@ struct MenuContentView: View {
             ringCard(icon: "memorychip", label: L10n.tr("内存", "Memória"), value: s.memoryPressure,
                      color: MenuPalette.loadColor(s.memoryPressure),
                      sub: FileSizeFormatter.format(s.memoryUsed),
-                     action: (L10n.tr("优化", "Otimizar"), "maintenance"))
+                     action: (L10n.tr("优化", "Otimizar"), { TipAction.open(moduleID: "maintenance") }))
             ringCard(icon: "internaldrive", label: L10n.tr("磁盘", "Disco"), value: diskUsed,
                      color: MenuPalette.loadColor(diskUsed),
                      sub: L10n.tr("\(FileSizeFormatter.format(s.diskFree)) 可用", "\(FileSizeFormatter.format(s.diskFree)) livres"),
-                     action: (L10n.tr("清理", "Liberar"), "system-junk"))
+                     action: (L10n.tr("清理", "Liberar"), { TipAction.runAction("quick-clean") }))
             if let level = s.batteryLevel {
                 ringCard(icon: s.batteryIsCharging ? "battery.100.bolt" : "battery.75",
                          label: L10n.tr("电池", "Bateria"), value: level,
@@ -281,14 +281,14 @@ struct MenuContentView: View {
         .padding(.bottom, 4)
     }
 
-    private func ringCard(icon: String, label: String, value: Double, color: Color, sub: String, action: (label: String, module: String)? = nil) -> some View {
+    private func ringCard(icon: String, label: String, value: Double, color: Color, sub: String, action: (label: String, run: () -> Void)? = nil) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 7) {
                 Image(systemName: icon).font(.system(size: 12, weight: .semibold)).foregroundStyle(color)
                 Text(label).font(.system(size: 12.5, weight: .bold)).foregroundStyle(MenuPalette.textPrimary)
                 Spacer(minLength: 2)
                 if let action {
-                    Button { TipAction.open(moduleID: action.module) } label: {
+                    Button { action.run() } label: {
                         Text(action.label).font(.system(size: 11, weight: .bold)).foregroundStyle(MenuPalette.accent)
                     }.buttonStyle(.plain)
                 }
@@ -394,7 +394,7 @@ struct MenuContentView: View {
                     .fixedSize(horizontal: false, vertical: true).padding(.top, 9)
                 Text(tip.body).font(.system(size: 12)).foregroundStyle(MenuPalette.muted)
                     .fixedSize(horizontal: false, vertical: true).padding(.top, 3)
-                Button { TipAction.open(moduleID: MenuTipRouting.moduleID(forTipID: tip.id)) } label: {
+                Button { runTipAction(tip) } label: {
                     Text(tipCTA(tip))
                         .font(.system(size: 13, weight: .heavy))
                         .foregroundStyle(Color(red: 0.227, green: 0.149, blue: 0.0))
@@ -416,6 +416,16 @@ struct MenuContentView: View {
         }
         .padding(.horizontal, 15)
         .padding(.bottom, 13)
+    }
+
+    /// Cache/trash tips clean right away via the app; other tips just navigate.
+    private func runTipAction(_ tip: TipsEngine.Tip) {
+        switch tip.id {
+        case "caches_large", "trash_large":
+            TipAction.runAction("quick-clean")
+        default:
+            TipAction.open(moduleID: MenuTipRouting.moduleID(forTipID: tip.id))
+        }
     }
 
     private func tipCTA(_ tip: TipsEngine.Tip) -> String {

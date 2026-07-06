@@ -174,36 +174,21 @@ struct ContentView: View {
         switch item {
         case .home:
             HomeDashboardView()
-        case .smartScan:
-            SmartScanView()
-        case .systemJunk:
-            SystemJunkView()
-        case .mailAttachments:
-            MailAttachmentsView()
-        case .trashBins:
-            TrashBinsView()
-        case .malwareRemoval:
-            MalwareView()
-        case .privacy:
-            PrivacyView()
+        case .smartScan, .systemJunk, .mailAttachments, .trashBins,
+             .malwareRemoval, .privacy, .largeOldFiles, .duplicates, .shredder:
+            DSModuleScreen(module: item)
         case .optimization:
-            OptimizationView()
+            DSOptimizationScreen()
         case .maintenance:
-            MaintenanceView()
+            DSMaintenanceScreen()
         case .uninstaller:
-            UninstallerView()
+            DSUninstallerScreen()
         case .updater:
-            UpdaterView()
+            DSUpdaterScreen()
         case .spaceLens:
-            SpaceLensView()
-        case .largeOldFiles:
-            LargeOldFilesView()
-        case .duplicates:
-            DuplicatesView()
-        case .shredder:
-            ShredderView()
+            DSSpaceLensScreen()
         case .settings:
-            SettingsPageView()
+            DSSettingsScreen()
         case .cleanupHistory:
             CleanupHistoryView()
         }

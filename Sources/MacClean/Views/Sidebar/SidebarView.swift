@@ -66,19 +66,19 @@ public enum SidebarItem: String, CaseIterable, Identifiable {
 
     public var icon: String {
         switch self {
-        case .home: "house.fill"
-        case .smartScan: "sparkle.magnifyingglass"
+        case .home: "house"
+        case .smartScan: "magnifyingglass"
         case .systemJunk: "trash.circle"
-        case .mailAttachments: "paperclip.circle"
+        case .mailAttachments: "paperclip"
         case .trashBins: "trash"
         case .malwareRemoval: "shield.lefthalf.filled"
-        case .privacy: "hand.raised.fill"
-        case .optimization: "gauge.with.dots.needle.67percent"
-        case .maintenance: "wrench.and.screwdriver"
-        case .uninstaller: "xmark.app"
+        case .privacy: "eye.slash"
+        case .optimization: "gauge.with.needle"
+        case .maintenance: "wrench.and.screwdriver.fill"
+        case .uninstaller: "xmark.square"
         case .updater: "arrow.triangle.2.circlepath"
-        case .spaceLens: "chart.pie"
-        case .largeOldFiles: "doc.richtext"
+        case .spaceLens: "clock.badge.questionmark"
+        case .largeOldFiles: "doc.text.magnifyingglass"
         case .duplicates: "plus.square.on.square"
         case .shredder: "scissors"
         case .settings: "gearshape"
@@ -134,147 +134,133 @@ public enum SidebarSection: String, CaseIterable, Identifiable {
 
 public struct SidebarView: View {
     @Binding var selection: SidebarItem?
-    /// Sections the user has collapsed. We render our own collapsible headers
-    /// with an always-visible chevron that folds on tap.
     @State private var collapsedSections: Set<SidebarSection> = []
-
-    // Design tokens (from the Cleaner redesign).
-    private static let sidebarTop = Color(red: 0.055, green: 0.11, blue: 0.15)
-    private static let sidebarBottom = Color(red: 0.04, green: 0.062, blue: 0.09)
-    private static let headerColor = Color(red: 0.37, green: 0.455, blue: 0.535)
-    private static let itemColor = Color(red: 0.86, green: 0.89, blue: 0.925)
-    private static let pillTop = Color(red: 0.16, green: 0.78, blue: 0.83)
 
     public init(selection: Binding<SidebarItem?>) {
         self._selection = selection
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
-            // Traffic-light gutter spacer so the first item clears the window
-            // controls, matching the mockup.
-            Color.clear.frame(height: 40)
+        VStack(alignment: .leading, spacing: 0) {
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Color.clear.frame(height: 38)   // espaço dos botões de janela
 
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 3) {
-                    ForEach(SidebarSection.allCases) { section in
-                        if section == .main {
-                            ForEach(section.items) { sidebarRow($0) }
-                        } else {
-                            sectionHeader(section)
-                            if !collapsedSections.contains(section) {
-                                ForEach(section.items) { sidebarRow($0) }
-                            }
+                    dsRow(.home)
+                    dsRow(.smartScan)
+                        .padding(.bottom, 10)
+
+                    ForEach(SidebarSection.allCases.filter { $0 != .main }) { section in
+                        sectionHeader(section)
+                        if !collapsedSections.contains(section) {
+                            ForEach(section.items) { dsRow($0) }
                         }
                     }
                 }
                 .padding(.horizontal, 12)
-                .padding(.bottom, 10)
             }
 
-            Divider().overlay(Color.white.opacity(0.06))
-
-            footerRow(item: .cleanupHistory, icon: "clock.arrow.circlepath",
-                      title: L10n.tr("清理历史", "Histórico de Limpezas"), trailing: nil)
-            footerRow(item: .settings, icon: "gearshape",
-                      title: L10n.tr("设置", "Ajustes"), trailing: "v\(MCConstants.appVersion)")
-                .padding(.bottom, 8)
+            footerButton(item: .cleanupHistory, icon: "clock.arrow.circlepath",
+                         title: L10n.tr("清理历史", "Histórico de Limpezas"), trailing: nil)
+                .padding(.horizontal, 12)
+            footerButton(item: .settings, icon: "gearshape",
+                         title: L10n.tr("设置", "Ajustes"), trailing: "v\(MCConstants.appVersion)")
+                .padding(12)
         }
-        .frame(minWidth: 210, idealWidth: 240)
-        .background(
-            LinearGradient(colors: [Self.sidebarTop, Self.sidebarBottom],
-                           startPoint: .top, endPoint: .bottom)
-                .overlay(alignment: .top) {
-                    LinearGradient(colors: [Color.brand.opacity(0.10), .clear],
-                                   startPoint: .top, endPoint: .bottom)
-                        .frame(height: 220)
-                }
-                .ignoresSafeArea()
-        )
+        .frame(width: 250)
+        .background(Theme.sidebar.ignoresSafeArea())
     }
 
-    /// Collapsible section header: chevron + uppercased title; taps fold it.
+    /// Cabeçalho de seção: chevron 8pt bold + título 10 bold kerning 1.0,
+    /// accent 55%, dobra com spring 0.2 (DESIGN_SYSTEM §8.1).
     private func sectionHeader(_ section: SidebarSection) -> some View {
         let isCollapsed = collapsedSections.contains(section)
-        return HStack(spacing: 6) {
-            Image(systemName: isCollapsed ? "chevron.right" : "chevron.down")
-                .font(.system(size: 9, weight: .bold))
-            Text(section.title.uppercased())
-                .font(.system(size: 10.5, weight: .bold))
-                .tracking(1.1)
-            Spacer()
-        }
-        .foregroundStyle(Self.headerColor)
-        .padding(.horizontal, 13)
-        .padding(.top, 14).padding(.bottom, 3)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            withAnimation(.easeInOut(duration: 0.18)) {
+        return Button {
+            withAnimation(.easeInOut(duration: 0.2)) {
                 if isCollapsed { collapsedSections.remove(section) }
                 else { collapsedSections.insert(section) }
             }
-        }
-    }
-
-    /// A sidebar item as a rounded pill; the selected one gets an accent
-    /// gradient fill with a soft glow.
-    private func sidebarRow(_ item: SidebarItem) -> some View {
-        let selected = selection == item
-        return HStack(spacing: 12) {
-            Image(systemName: item.icon)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(selected ? .white : item.theme.accentColor)
-                .frame(width: 18)
-            Text(item.title)
-                .font(.system(size: 13.5, weight: .semibold))
-                .foregroundStyle(selected ? .white : Self.itemColor)
-                .lineLimit(1)
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 13)
-        .padding(.vertical, 9)
-        .background(rowBackground(selected: selected))
-        .contentShape(Rectangle())
-        .onTapGesture { selection = item }
-    }
-
-    private func footerRow(item: SidebarItem, icon: String, title: String, trailing: String?) -> some View {
-        let selected = selection == item
-        return HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(selected ? .white : Self.itemColor.opacity(0.9))
-                .frame(width: 18)
-            Text(title)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(selected ? .white : Self.itemColor)
-            Spacer(minLength: 0)
-            if let trailing {
-                Text(trailing)
-                    .font(.system(size: 10, design: .monospaced))
-                    .foregroundStyle(selected ? .white.opacity(0.8) : Self.headerColor)
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: isCollapsed ? "chevron.right" : "chevron.down")
+                    .font(.system(size: 8, weight: .bold))
+                Text(section.title.uppercased())
+                    .font(.system(size: 10, weight: .bold))
+                    .kerning(1.0)
+                Spacer()
             }
+            .foregroundStyle(Theme.accent.opacity(0.55))
+            .padding(.horizontal, 10)
+            .padding(.top, 12)
+            .padding(.bottom, 4)
+            .contentShape(Rectangle())
         }
-        .padding(.horizontal, 13).padding(.vertical, 9)
-        .background(rowBackground(selected: selected))
-        .contentShape(Rectangle())
-        .onTapGesture { selection = item }
-        .padding(.horizontal, 12).padding(.top, 6)
+        .buttonStyle(.plain)
     }
 
-    @ViewBuilder
-    private func rowBackground(selected: Bool) -> some View {
-        if selected {
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(LinearGradient(colors: [Self.pillTop, Color.brand],
-                                     startPoint: .top, endPoint: .bottom))
-                .shadow(color: Color.brand.opacity(0.45), radius: 7, y: 4)
-                .overlay {
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.22), lineWidth: 0.5)
+    /// Item da sidebar: pill accent com texto/ícone pretos quando selecionado,
+    /// hover branco 6% (DESIGN_SYSTEM §8.1).
+    private func dsRow(_ item: SidebarItem) -> some View {
+        DSSidebarRow(item: item, selection: $selection)
+    }
+
+    private func footerButton(item: SidebarItem, icon: String, title: String, trailing: String?) -> some View {
+        let isSelected = selection == item
+        return Button { selection = item } label: {
+            HStack {
+                Image(systemName: icon).font(.system(size: 14))
+                Text(title).font(.system(size: 13, weight: .semibold))
+                Spacer()
+                if let trailing {
+                    Text(trailing)
+                        .font(.system(size: 11, design: .monospaced))
+                        .opacity(0.6)
                 }
-        } else {
-            Color.clear
+            }
+            .foregroundStyle(isSelected ? Color.black.opacity(0.8) : .white.opacity(0.85))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 9)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(isSelected ? item.dsAccent : .clear)
+            )
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+    }
+}
+
+/// Linha da sidebar com hover próprio (estado local).
+private struct DSSidebarRow: View {
+    let item: SidebarItem
+    @Binding var selection: SidebarItem?
+    @State private var hovering = false
+
+    private var isSelected: Bool { selection == item }
+
+    var body: some View {
+        Button { selection = item } label: {
+            HStack(spacing: 10) {
+                Image(systemName: item.icon)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(isSelected ? Color.black.opacity(0.75) : item.dsIconColor)
+                    .frame(width: 18)
+                Text(item.title)
+                    .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
+                    .foregroundStyle(isSelected ? Color.black.opacity(0.85) : .white.opacity(0.9))
+                    .lineLimit(1)
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(isSelected ? item.dsAccent : hovering ? Color.white.opacity(0.06) : .clear)
+                    .shadow(color: isSelected ? item.dsAccent.opacity(0.5) : .clear, radius: 10, y: 2)
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
     }
 }

@@ -27,8 +27,11 @@ struct ContentView: View {
         } detail: {
             ZStack {
                 if let item = appState.selectedSidebarItem {
-                    GradientBackgroundView(theme: item.theme)
+                    AuroraBackground(top: item.dsThemeColor,
+                                     tint: item.dsAccent,
+                                     boost: item == .smartScan)
                         .ignoresSafeArea()
+                        .animation(.easeInOut(duration: 0.35), value: item)
                 }
 
                 // Keep every visited module view alive across tab switches:
@@ -70,6 +73,7 @@ struct ContentView: View {
             .toolbarBackground(.hidden, for: .windowToolbar)
         }
         .background(TitleBarConfigurator())
+        .preferredColorScheme(.dark)
         // Empty: the system-drawn title pins to the leading edge and on
         // macOS 26 ignores titleVisibility re-asserts while SwiftUI owns a
         // non-empty title. The visible (centered) title is drawn by the

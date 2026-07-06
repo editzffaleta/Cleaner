@@ -18,13 +18,9 @@ struct ContentView: View {
     var body: some View {
         @Bindable var state = appState
 
-        NavigationSplitView {
+        HStack(spacing: 0) {
             SidebarView(selection: $state.selectedSidebarItem)
-                // The sidebar is the app's primary navigation and is always
-                // shown, so the toolbar's collapse-sidebar button is just
-                // dead weight (#21.4). Remove it.
-                .toolbar(removing: .sidebarToggle)
-        } detail: {
+
             ZStack {
                 if let item = appState.selectedSidebarItem {
                     AuroraBackground(top: item.dsThemeColor,
@@ -70,8 +66,10 @@ struct ContentView: View {
                 .ignoresSafeArea(edges: .top)
                 .allowsHitTesting(false)
             }
-            .toolbarBackground(.hidden, for: .windowToolbar)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .ignoresSafeArea()
+        .animation(.easeInOut(duration: 0.35), value: appState.selectedSidebarItem)
         .background(TitleBarConfigurator())
         .preferredColorScheme(.dark)
         // Empty: the system-drawn title pins to the leading edge and on

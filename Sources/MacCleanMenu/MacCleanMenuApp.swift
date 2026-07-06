@@ -75,21 +75,24 @@ struct MacCleanMenuApp: App {
 // MARK: - Palette (Midnight / turquoise)
 
 enum MenuPalette {
-    static let accent   = Color(red: 0.07, green: 0.737, blue: 0.780)   // #12bcc7
-    static let bgBase   = Color(red: 0.027, green: 0.031, blue: 0.051)  // #07080d
-    static let surface  = Color(red: 0.118, green: 0.157, blue: 0.212)  // #1e2836
-    static let surface2 = Color(red: 0.086, green: 0.122, blue: 0.169)  // #161f2b
-    static let border   = Color.white.opacity(0.08)
+    // Paleta do DESIGN_SYSTEM.md (§2): accent teal claro, fundos escuros,
+    // superfícies Theme.card e cores semânticas fixas.
+    static let accent   = Color(red: 0.49, green: 0.85, blue: 0.82)     // teal claro
+    static let bgBase   = Color(red: 0.025, green: 0.075, blue: 0.085)  // Theme.bgBottom
+    static let bgTop    = Color(red: 0.055, green: 0.145, blue: 0.155)  // Theme.bgTop
+    static let surface  = Color(red: 0.075, green: 0.165, blue: 0.175)  // Theme.card
+    static let surface2 = Color.black.opacity(0.25)                     // superfície secundária
+    static let border   = Color.white.opacity(0.16)
 
-    static let green  = Color(red: 0.204, green: 0.827, blue: 0.600)    // #34d399
-    static let amber  = Color(red: 0.961, green: 0.714, blue: 0.220)    // #f5b638
-    static let red    = Color(red: 0.949, green: 0.333, blue: 0.373)    // #f2555f
-    static let teal   = Color(red: 0.176, green: 0.831, blue: 0.749)    // #2dd4bf
+    static let green  = Color(red: 0.45, green: 0.85, blue: 0.60)   // sucesso / OK / CPU
+    static let amber  = Color(red: 0.95, green: 0.78, blue: 0.35)   // atenção / memória
+    static let red    = Color(red: 0.95, green: 0.45, blue: 0.45)   // perigo / disco cheio
+    static let teal   = Color(red: 0.40, green: 0.85, blue: 0.85)
 
-    static let textPrimary = Color(red: 0.949, green: 0.945, blue: 0.969)
-    static let muted       = Color(red: 0.576, green: 0.631, blue: 0.706) // #93a1b4
+    static let textPrimary = Color.white
+    static let muted       = Color.white.opacity(0.6)               // texto secundário (§1.5)
 
-    /// Value → color on a green→amber→red scale (for CPU/memory/disk rings).
+    /// Valor → cor na escala verde→âmbar→vermelho (anéis CPU/memória/disco).
     static func loadColor(_ v: Double) -> Color {
         if v >= 0.85 { return red }
         if v >= 0.65 { return amber }
@@ -666,13 +669,29 @@ struct RingGauge: View {
 // MARK: - Surface card modifier & color blends
 
 extension View {
-    func cardSurface(cornerRadius: CGFloat = 15) -> some View {
+    /// Glass card do DESIGN_SYSTEM §6: raio 18 contínuo, fundo Theme.card 85%
+    /// com brilho branco 5% no topo-esquerdo, borda 1px em gradiente
+    /// (branco 16% → 3%) e sombra preta 35%. Sem hover-lift (popover).
+    func cardSurface(cornerRadius: CGFloat = 18) -> some View {
         self
-            .background(MenuPalette.surface.opacity(0.9), in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .background(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(MenuPalette.surface.opacity(0.85))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                            .fill(LinearGradient(colors: [.white.opacity(0.05), .clear],
+                                                 startPoint: .topLeading, endPoint: .bottomTrailing))
+                    )
+            )
             .overlay {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .strokeBorder(MenuPalette.border, lineWidth: 0.5)
+                    .strokeBorder(
+                        LinearGradient(colors: [.white.opacity(0.16), .white.opacity(0.03),
+                                                MenuPalette.accent.opacity(0.06)],
+                                       startPoint: .topLeading, endPoint: .bottomTrailing),
+                        lineWidth: 1)
             }
+            .shadow(color: .black.opacity(0.35), radius: 12, y: 6)
     }
 }
 

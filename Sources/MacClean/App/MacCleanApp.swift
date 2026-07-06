@@ -33,7 +33,7 @@ struct MacCleanApp: App {
                 .tint(Color.brand)
                 .environment(\.locale, Locale(identifier: appLanguage.localeIdentifier))
                 .id(appLanguage.rawValue)
-                .frame(minWidth: 800, minHeight: 550)
+                .frame(minWidth: 1180, minHeight: 720)
                 .sheet(isPresented: $showOnboarding) {
                     OnboardingView(isPresented: $showOnboarding)
                         .tint(Color.brand)
@@ -66,8 +66,8 @@ struct MacCleanApp: App {
                     }
                 }
         }
-        .windowStyle(.titleBar)
-        .defaultSize(width: 960, height: 620)
+        .windowStyle(.hiddenTitleBar)
+        .defaultSize(width: 1200, height: 772)
         // Keep the standard "Settings…" menu item + Cmd-comma, but route
         // them to the in-app page (the separate Settings window is gone).
         .commands {

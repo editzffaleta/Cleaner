@@ -768,6 +768,7 @@ private struct DSTreemapBlock: View {
 // MARK: - Ajustes (chaves REAIS)
 
 struct DSSettingsScreen: View {
+    @Environment(AppState.self) private var appState
     @AppStorage("automaticUpdateChecks") private var autoUpdate = true
     @AppStorage("launchAtLogin") private var openAtLogin = false
     @AppStorage("showMenuBarWidget") private var showMenuBar = true
@@ -826,6 +827,20 @@ struct DSSettingsScreen: View {
                             .font(.system(.body, design: .monospaced))
                     }
                     .font(.callout)
+                }
+
+                sectionTitle("Histórico")
+                card {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Histórico de Limpezas").font(.system(size: 15, weight: .medium))
+                            Text("Veja quanto espaço você já liberou ao longo do tempo.")
+                                .font(.callout).foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Button("Abrir") { appState.selectedSidebarItem = .cleanupHistory }
+                            .buttonStyle(.bordered)
+                    }
                 }
 
                 sectionTitle("Idioma da Interface")

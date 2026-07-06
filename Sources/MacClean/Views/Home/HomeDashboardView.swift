@@ -202,21 +202,26 @@ struct HomeDashboardView: View {
             Spacer(minLength: 12)
 
             VStack(alignment: .leading, spacing: 10) {
-                HStack(spacing: 0) {
-                    ForEach(model.storage) { s in
-                        HStack(spacing: 6) {
-                            Circle()
-                                .fill(s.color)
-                                .frame(width: 7, height: 7)
-                                .shadow(color: s.color.opacity(0.8), radius: 3)
-                            (Text(s.label + "  ").font(.system(size: 12))
-                                .foregroundColor(.white.opacity(0.8))
-                             + Text(FileSizeFormatter.format(s.bytes)).font(.system(size: 12, design: .monospaced))
-                                .foregroundColor(.white.opacity(0.5)))
-                                .lineLimit(1)
-                                .fixedSize()
+                let rows = stride(from: 0, to: model.storage.count, by: 3).map {
+                    Array(model.storage[$0..<min($0 + 3, model.storage.count)])
+                }
+                ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                    HStack(spacing: 0) {
+                        ForEach(row) { s in
+                            HStack(spacing: 6) {
+                                Circle()
+                                    .fill(s.color)
+                                    .frame(width: 7, height: 7)
+                                    .shadow(color: s.color.opacity(0.8), radius: 3)
+                                (Text(s.label + "  ").font(.system(size: 12))
+                                    .foregroundColor(.white.opacity(0.8))
+                                 + Text(FileSizeFormatter.format(s.bytes)).font(.system(size: 12, design: .monospaced))
+                                    .foregroundColor(.white.opacity(0.5)))
+                                    .lineLimit(1)
+                                    .fixedSize()
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
             }

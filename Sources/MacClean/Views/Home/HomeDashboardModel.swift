@@ -63,17 +63,19 @@ final class HomeDashboardModel {
     private func computeStorage(diskTotal: UInt64, diskFree: UInt64) {
         guard diskTotal > 0 else { return }
         Task.detached(priority: .utility) {
-            // Only /Applications is scanned (no TCC prompt); user folders like
-            // Documents/Downloads/Pictures are protected and would pop a
-            // permission dialog on the Home screen, so the rest is bucketed as
-            // "Sistema e outros".
+            // Pastas escaneáveis sem prompt de permissão (TCC): /Applications e
+            // ~/Library. Documentos/Downloads/Fotos são protegidas e abririam
+            // diálogos na tela inicial, então ficam agrupadas em "Sistema e outros".
             let apps = dirSizeCapped(URL(filePath: "/Applications"))
+            let library = dirSizeCapped(MCConstants.home.appending(path: "Library"), maxFiles: 120_000)
             let used = diskTotal > diskFree ? diskTotal - diskFree : 0
-            let system = used > apps ? used - apps : 0
+            let known = apps + library
+            let system = used > known ? used - known : 0
             let slices: [StorageSlice] = [
-                .init(label: L10n.tr("系统与其他", "Sistema e outros"), bytes: system, color: Color(red: 0.35, green: 0.55, blue: 0.95)),
-                .init(label: L10n.tr("应用", "Aplicativos"), bytes: apps, color: Color(red: 0.62, green: 0.42, blue: 0.92)),
-                .init(label: L10n.tr("可用", "Livre"), bytes: diskFree, color: Color.white.opacity(0.22)),
+                .init(label: L10n.tr("系统与其他", "Sistema e outros"), bytes: system, color: Color(red: 0.35, green: 0.5, blue: 0.95)),
+                .init(label: L10n.tr("应用", "Aplicativos"), bytes: apps, color: Color(red: 0.6, green: 0.45, blue: 0.95)),
+                .init(label: L10n.tr("资源库", "Biblioteca"), bytes: library, color: Color(red: 0.35, green: 0.8, blue: 0.7)),
+                .init(label: L10n.tr("可用", "Livre"), bytes: diskFree, color: Color(white: 0.35)),
             ].filter { $0.bytes > 0 }
             await MainActor.run { self.storage = slices }
         }

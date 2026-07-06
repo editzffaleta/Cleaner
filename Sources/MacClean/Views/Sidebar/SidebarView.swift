@@ -160,9 +160,6 @@ public struct SidebarView: View {
                 .padding(.horizontal, 12)
             }
 
-            footerButton(item: .cleanupHistory, icon: "clock.arrow.circlepath",
-                         title: L10n.tr("清理历史", "Histórico de Limpezas"), trailing: nil)
-                .padding(.horizontal, 12)
             footerButton(item: .settings, icon: "gearshape",
                          title: L10n.tr("设置", "Ajustes"), trailing: "v\(MCConstants.appVersion)")
                 .padding(12)

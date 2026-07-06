@@ -24,6 +24,7 @@ final class MenuStatsModel {
     private(set) var devices: ConnectedDevices?
     private(set) var protection: SharedAppState.ProtectionStatus?
     private(set) var tips: [TipsEngine.Tip] = []
+    private(set) var topApps: [RunningAppInfo] = []
 
     private let statsCollector = SystemStatsCollector()
     private let networkMonitor = NetworkSpeedMonitor()
@@ -64,6 +65,10 @@ final class MenuStatsModel {
                 networkSpeed = n
             }
             protection = SharedAppState.protectionStatus
+            // Top apps by memory — collected on the main actor (holds NSImages).
+            // Cheap (~one syscall per visible app); refreshed every tick so the
+            // list feels live like the rings.
+            topApps = TopAppsCollector.collect()
             tickCount += 1
             if tickCount % 10 == 1 {
                 if let d = await timed("devices", budget: .seconds(3), { await self.devicesCollector.collect() }) {

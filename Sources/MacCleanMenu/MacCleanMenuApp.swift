@@ -127,7 +127,7 @@ struct MenuContentView: View {
                             connectedCard
                         }
                     }
-                    .frame(maxHeight: 540)
+                    .frame(maxHeight: scrollMaxHeight)
                     footer
                 } else {
                     ProgressView().controlSize(.small).tint(MenuPalette.accent)
@@ -137,6 +137,15 @@ struct MenuContentView: View {
             }
         }
         .frame(width: 380)
+    }
+
+    /// Cap the scroll area to the screen so the pinned footer never clips: use
+    /// as much height as the display allows (minus room for the header, footer
+    /// and menu-bar chrome), so on tall screens almost everything fits without
+    /// scrolling and on short ones it still stays on-screen.
+    private var scrollMaxHeight: CGFloat {
+        let available = NSScreen.main?.visibleFrame.height ?? 800
+        return min(940, max(380, available - 170))
     }
 
     private var background: some View {

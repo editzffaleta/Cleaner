@@ -25,7 +25,7 @@
 </p>
 
 <p align="center">
-  <img src="assets/demo.png" width="700" alt="Captura de tela do Cleaner" />
+  <img src="assets/demo.gif" width="780" alt="Cleaner — telas do app (Início, Escaneamento Inteligente, módulos e Ajustes)" />
 </p>
 
 ---

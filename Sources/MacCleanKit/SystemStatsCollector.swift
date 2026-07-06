@@ -18,6 +18,22 @@ public actor SystemStatsCollector {
         public let batteryCycleCount: Int?
         public let batteryTemperature: Double?
         public let uptime: TimeInterval
+
+        public init(cpuUsage: Double, cpuTemperature: Double?, memoryTotal: UInt64,
+                    memoryUsed: UInt64, memoryPressure: Double, swapUsed: UInt64,
+                    diskTotal: UInt64, diskFree: UInt64, batteryLevel: Double?,
+                    batteryHealth: Double?, batteryIsCharging: Bool,
+                    batteryCycleCount: Int?, batteryTemperature: Double?,
+                    uptime: TimeInterval) {
+            self.cpuUsage = cpuUsage; self.cpuTemperature = cpuTemperature
+            self.memoryTotal = memoryTotal; self.memoryUsed = memoryUsed
+            self.memoryPressure = memoryPressure; self.swapUsed = swapUsed
+            self.diskTotal = diskTotal; self.diskFree = diskFree
+            self.batteryLevel = batteryLevel; self.batteryHealth = batteryHealth
+            self.batteryIsCharging = batteryIsCharging
+            self.batteryCycleCount = batteryCycleCount
+            self.batteryTemperature = batteryTemperature; self.uptime = uptime
+        }
     }
 
     private var previousCPUTicks = CPUTicks(user: 0, system: 0, idle: 0, nice: 0)

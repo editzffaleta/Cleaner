@@ -125,21 +125,20 @@ struct MenuContentView: View {
                     // The widget is tall; keep the header and footer pinned and
                     // let the middle scroll so everything stays reachable even
                     // when the popover would otherwise overflow the screen.
-                    ScrollView(.vertical, showsIndicators: false) {
-                        VStack(spacing: 0) {
-                            healthCard(stats)
-                            statGrid(stats)
-                            activityHeader
-                            chips(stats)
-                            if !tips.isEmpty { recommendationCard }
-                            connectedCard
+                    // Render mode (CLEANER_RENDER): plain VStack — ImageRenderer
+                    // can't snapshot ScrollView contents.
+                    if ProcessInfo.processInfo.environment["CLEANER_RENDER"] != nil {
+                        middleStack(stats)
+                    } else {
+                        ScrollView(.vertical, showsIndicators: false) {
+                            middleStack(stats)
+                                .background(GeometryReader { g in
+                                    Color.clear.preference(key: ContentHeightKey.self, value: g.size.height)
+                                })
                         }
-                        .background(GeometryReader { g in
-                            Color.clear.preference(key: ContentHeightKey.self, value: g.size.height)
-                        })
+                        .frame(height: min(contentHeight, scrollMaxHeight))
+                        .onPreferenceChange(ContentHeightKey.self) { contentHeight = $0 }
                     }
-                    .frame(height: min(contentHeight, scrollMaxHeight))
-                    .onPreferenceChange(ContentHeightKey.self) { contentHeight = $0 }
                     footer
                 } else {
                     ProgressView().controlSize(.small).tint(MenuPalette.accent)
@@ -158,6 +157,19 @@ struct MenuContentView: View {
     private var scrollMaxHeight: CGFloat {
         let available = NSScreen.main?.visibleFrame.height ?? 800
         return min(940, max(380, available - 170))
+    }
+
+    /// Miolo do popover (cards) — compartilhado entre o ScrollView normal e o
+    /// modo de render usado para gerar as imagens do README.
+    private func middleStack(_ stats: SystemStatsCollector.SystemStats) -> some View {
+        VStack(spacing: 0) {
+            healthCard(stats)
+            statGrid(stats)
+            activityHeader
+            chips(stats)
+            if !tips.isEmpty { recommendationCard }
+            connectedCard
+        }
     }
 
     private var background: some View {

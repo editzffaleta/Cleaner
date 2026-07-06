@@ -1,203 +1,276 @@
 import SwiftUI
 import MacCleanKit
 
-/// The Home dashboard ("Início") — a system overview with protection status,
-/// storage breakdown, live vitals, and quick entry points to the modules.
+// Cores semânticas fixas (DESIGN_SYSTEM §2).
+private let green = Color(red: 0.45, green: 0.85, blue: 0.60)
+private let yellow = Color(red: 0.95, green: 0.78, blue: 0.35)
+private let red = Color(red: 0.95, green: 0.45, blue: 0.45)
+
+/// Tela Início — dashboard do protótipo (HomeScreen) ligado aos dados reais
+/// (HomeDashboardModel): vitais ao vivo, proteção, armazenamento e atalhos.
 struct HomeDashboardView: View {
     @Environment(AppState.self) private var appState
     @State private var model = HomeDashboardModel()
+    @State private var loaded = false
 
-    private var green: Color { Color(red: 0.204, green: 0.827, blue: 0.600) }
-    private var amber: Color { Color(red: 0.961, green: 0.714, blue: 0.220) }
-    private var red: Color { Color(red: 0.949, green: 0.333, blue: 0.373) }
+    private var threats: Int { model.protection?.threatsFound ?? 0 }
+    private var protected: Bool { threats == 0 }
+    private var statusColor: Color { protected ? green : red }
+    private var recoverableText: String {
+        model.recoverableBytes.map { FileSizeFormatter.format($0) } ?? "—"
+    }
 
     var body: some View {
-        ScrollView {
+        ScrollView(showsIndicators: false) {
             VStack(spacing: 16) {
-                systemStateCard
-                HStack(spacing: 16) {
-                    storageCard
-                    vitalsCard
+                heroCard.reveal(delay: 0.05)
+
+                HStack(alignment: .top, spacing: 16) {
+                    storageCard.frame(maxWidth: .infinity).frame(height: 212)
+                        .tilt3D(maxAngle: 3).reveal(delay: 0.15)
+                    vitalsCard.frame(width: 330).frame(height: 212)
+                        .tilt3D(maxAngle: 4).reveal(delay: 0.22)
                 }
+
                 HStack(spacing: 16) {
-                    quickCard(icon: "trash", tint: green,
-                              title: L10n.tr("清理", "Limpeza"),
-                              subtitle: L10n.tr("缓存、日志和应用残留。", "Cache, logs e restos de aplicativos."),
-                              value: model.recoverableBytes.map { FileSizeFormatter.format($0) } ?? "—",
-                              valueLabel: L10n.tr("可回收", "recuperável"),
-                              action: L10n.tr("查看", "Revisar"), target: .systemJunk)
-                    quickCard(icon: "checkmark.shield", tint: red,
-                              title: L10n.tr("防护", "Proteção"),
-                              subtitle: L10n.tr("恶意软件、跟踪器和隐私。", "Malware, rastreadores e privacidade."),
-                              value: "\(model.protection?.threatsFound ?? 0)",
-                              valueLabel: L10n.tr("威胁", "ameaças"),
-                              action: L10n.tr("检查", "Verificar"), target: .malwareRemoval)
-                    quickCard(icon: "gauge.with.dots.needle.67percent", tint: amber,
-                              title: L10n.tr("性能", "Desempenho"),
-                              subtitle: L10n.tr("占用高的应用与维护任务。", "Apps pesados e tarefas de manutenção."),
-                              value: "\(model.heavyAppsCount ?? 0)",
-                              valueLabel: L10n.tr("重型应用", "apps pesados"),
-                              action: L10n.tr("优化", "Otimizar"), target: .optimization)
+                    ActionCard(icon: "trash", color: green,
+                               title: L10n.tr("清理", "Limpeza"),
+                               subtitle: L10n.tr("缓存、日志和应用残留。", "Cache, logs e restos de aplicativos."),
+                               value: recoverableText,
+                               valueSuffix: L10n.tr("可回收", "recuperável"),
+                               linkTitle: L10n.tr("查看", "Revisar")) { appState.selectedSidebarItem = .systemJunk }
+                        .reveal(delay: 0.30)
+                    ActionCard(icon: "checkmark.shield", color: red,
+                               title: L10n.tr("防护", "Proteção"),
+                               subtitle: L10n.tr("恶意软件、跟踪器和隐私。", "Malware, rastreadores e privacidade."),
+                               value: "\(threats)",
+                               valueSuffix: L10n.tr("威胁", "ameaças"),
+                               valueColor: protected ? green : red,
+                               linkTitle: L10n.tr("检查", "Verificar")) { appState.selectedSidebarItem = .malwareRemoval }
+                        .reveal(delay: 0.38)
+                    ActionCard(icon: "gauge.with.needle", color: yellow,
+                               title: L10n.tr("性能", "Desempenho"),
+                               subtitle: L10n.tr("占用高的应用与维护任务。", "Apps pesados e tarefas de manutenção."),
+                               value: "\(model.heavyAppsCount ?? 0)",
+                               valueSuffix: L10n.tr("重型应用", "apps pesados"),
+                               linkTitle: L10n.tr("优化", "Otimizar")) { appState.selectedSidebarItem = .optimization }
+                        .reveal(delay: 0.46)
                 }
             }
-            .padding(20)
+            .padding(.horizontal, 28)
+            .padding(.top, 42)
+            .padding(.bottom, 28)
+            .frame(maxWidth: 1060)
+            .frame(maxWidth: .infinity)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .onAppear { model.start() }
+        .onAppear {
+            model.start()
+            withAnimation(.spring(duration: 1.4).delay(0.3)) { loaded = true }
+        }
         .onDisappear { model.stop() }
     }
 
-    // MARK: System state
+    // MARK: Card principal
 
-    private var systemStateCard: some View {
-        let threats = model.protection?.threatsFound ?? 0
-        let protected = threats == 0
-        let statusColor = protected ? green : red
-        return HStack(alignment: .top, spacing: 20) {
-            protectionRing(color: statusColor, protected: protected)
+    private var heroCard: some View {
+        HStack(spacing: 26) {
+            ZStack {
+                Circle()
+                    .fill(statusColor.opacity(0.16))
+                    .blur(radius: 18)
+                    .pulseGlow(statusColor.opacity(0.4))
+
+                Circle().stroke(.white.opacity(0.07), lineWidth: 7)
+
+                Circle()
+                    .trim(from: 0, to: loaded ? (protected ? 0.85 : 0.35) : 0)
+                    .stroke(
+                        AngularGradient(colors: [statusColor.opacity(0.4), statusColor],
+                                        center: .center,
+                                        startAngle: .degrees(0), endAngle: .degrees(306)),
+                        style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .shadow(color: statusColor.opacity(0.7), radius: 8)
+
+                Circle().fill(statusColor.opacity(0.10)).padding(14)
+
+                Image(systemName: protected ? "checkmark.shield" : "exclamationmark.shield")
+                    .font(.system(size: 32, weight: .medium))
+                    .foregroundStyle(statusColor)
+                    .symbolEffect(.bounce, value: loaded)
+            }
+            .frame(width: 110, height: 110)
 
             VStack(alignment: .leading, spacing: 8) {
                 Text(L10n.tr("系统状态", "ESTADO DO SISTEMA"))
-                    .font(.system(size: 11, weight: .bold)).tracking(1).foregroundStyle(.secondary)
+                    .font(.system(size: 10, weight: .bold))
+                    .kerning(1.4)
+                    .foregroundStyle(Theme.accent.opacity(0.7))
+
                 Text(protected ? L10n.tr("你的 Mac 已受保护", "Seu Mac está protegido")
                                : L10n.tr("发现 \(threats) 个威胁", "\(threats) ameaça\(threats == 1 ? "" : "s") encontrada\(threats == 1 ? "" : "s")"))
-                    .font(.system(size: 24, weight: .bold)).foregroundStyle(.white)
-                Text(lastScanSubtitle)
-                    .font(.system(size: 12.5)).foregroundStyle(.white.opacity(0.65))
-                Button { appState.selectedSidebarItem = .smartScan } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "magnifyingglass").font(.system(size: 13, weight: .bold))
-                        Text(L10n.tr("运行智能扫描", "Executar Escaneamento Inteligente")).font(.system(size: 13.5, weight: .heavy))
-                    }
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 20).padding(.vertical, 11)
-                    .background(LinearGradient(colors: [Color(red: 0.16, green: 0.78, blue: 0.83), Color.brand],
-                                               startPoint: .top, endPoint: .bottom),
-                                in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-                    .shadow(color: Color.brand.opacity(0.45), radius: 8, y: 4)
-                }.buttonStyle(.plain).padding(.top, 4)
+                    .font(.system(size: 27, weight: .bold))
+                    .foregroundStyle(
+                        LinearGradient(colors: [.white, .white.opacity(0.75)],
+                                       startPoint: .top, endPoint: .bottom))
+
+                Text(heroSubtitle)
+                    .font(.system(size: 13))
+                    .foregroundStyle(.white.opacity(0.6))
+                    .lineLimit(1)
+
+                GlowButton(title: L10n.tr("运行智能扫描", "Executar Escaneamento Inteligente"),
+                           icon: "magnifyingglass") { appState.selectedSidebarItem = .smartScan }
+                    .padding(.top, 8)
             }
-            Spacer(minLength: 8)
-            VStack(alignment: .trailing, spacing: 16) {
-                stateStat(value: model.recoverableBytes.map { FileSizeFormatter.format($0) } ?? "—",
-                          label: L10n.tr("可回收", "Recuperável"))
-                stateStat(value: "\(threats)", label: L10n.tr("威胁", "Ameaças"))
-                stateStat(value: model.updatableCount.map { "\($0)" } ?? "—",
-                          label: L10n.tr("可更新应用", "Apps p/ atualizar"))
+
+            Spacer(minLength: 12)
+
+            Rectangle()
+                .fill(LinearGradient(colors: [.clear, .white.opacity(0.12), .clear],
+                                     startPoint: .top, endPoint: .bottom))
+                .frame(width: 1)
+                .padding(.vertical, 4)
+
+            VStack(alignment: .leading, spacing: 16) {
+                heroStat(recoverableText, L10n.tr("可回收", "Recuperável"), .white)
+                heroStat("\(threats)", L10n.tr("威胁", "Ameaças"), statusColor)
+                heroStat(model.updatableCount.map { "\($0)" } ?? "—",
+                         L10n.tr("可更新应用", "Apps p/ atualizar"), .white)
+            }
+            .frame(width: 132, alignment: .leading)
+        }
+        .padding(26)
+        .glassCard(hoverLift: false)
+        .overlay(LightSweep(cornerRadius: 18, period: 5.5))
+    }
+
+    private var heroSubtitle: String {
+        guard let p = model.protection else {
+            return L10n.tr("尚未扫描 · 可回收 \(recoverableText)", "Ainda não escaneado · \(recoverableText) de lixo recuperável")
+        }
+        let rel = CleanupHistoryView.relativeDate(p.lastScanDate)
+        return L10n.tr("上次扫描 \(rel) · 可回收 \(recoverableText)",
+                       "Último escaneamento \(rel) · \(recoverableText) de lixo recuperável")
+    }
+
+    private func heroStat(_ value: String, _ label: String, _ color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(value)
+                .font(.system(size: 18, weight: .bold, design: .monospaced))
+                .foregroundStyle(color)
+                .contentTransition(.numericText())
+            Text(label)
+                .font(.system(size: 11))
+                .foregroundStyle(.white.opacity(0.5))
+        }
+    }
+
+    // MARK: Armazenamento (dados reais do model)
+
+    private var storageCard: some View {
+        let totalBytes = model.stats?.diskTotal ?? 0
+        let sumBytes = max(model.storage.reduce(0) { $0 + $1.bytes }, 1)
+        return VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Label(L10n.tr("存储", "Armazenamento"), systemImage: "internaldrive")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(.white)
+                Spacer()
+                Text(L10n.tr("共 \(FileSizeFormatter.format(totalBytes))", "\(FileSizeFormatter.format(totalBytes)) no total"))
+                    .font(.system(size: 12, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.5))
+            }
+
+            Spacer(minLength: 12)
+
+            GeometryReader { geo in
+                HStack(spacing: 2) {
+                    ForEach(model.storage) { s in
+                        Rectangle()
+                            .fill(
+                                LinearGradient(colors: [s.color, s.color.opacity(0.7)],
+                                               startPoint: .top, endPoint: .bottom))
+                            .frame(width: loaded ? max(6, geo.size.width * CGFloat(Double(s.bytes) / Double(sumBytes))) : 6)
+                            .shadow(color: s.color.opacity(0.5), radius: 5, y: 1)
+                    }
+                }
+                .clipShape(Capsule())
+            }
+            .frame(height: 12)
+
+            Spacer(minLength: 12)
+
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 0) {
+                    ForEach(model.storage) { s in
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(s.color)
+                                .frame(width: 7, height: 7)
+                                .shadow(color: s.color.opacity(0.8), radius: 3)
+                            (Text(s.label + "  ").font(.system(size: 12))
+                                .foregroundColor(.white.opacity(0.8))
+                             + Text(FileSizeFormatter.format(s.bytes)).font(.system(size: 12, design: .monospaced))
+                                .foregroundColor(.white.opacity(0.5)))
+                                .lineLimit(1)
+                                .fixedSize()
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
             }
         }
         .padding(20)
-        .dashCard()
+        .glassCard()
     }
 
-    private func protectionRing(color: Color, protected: Bool) -> some View {
-        ZStack {
-            Circle().stroke(Color.white.opacity(0.10), lineWidth: 8)
-            Circle().trim(from: 0, to: protected ? 1 : 0.35)
-                .stroke(color, style: StrokeStyle(lineWidth: 8, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-                .shadow(color: color.opacity(0.5), radius: 6)
-            Image(systemName: protected ? "checkmark.shield.fill" : "exclamationmark.shield.fill")
-                .font(.system(size: 34, weight: .medium)).foregroundStyle(color)
-        }
-        .frame(width: 100, height: 100)
-    }
-
-    private func stateStat(value: String, label: String) -> some View {
-        VStack(alignment: .trailing, spacing: 1) {
-            Text(value).font(.system(size: 19, weight: .bold, design: .monospaced)).foregroundStyle(.white)
-            Text(label).font(.system(size: 11)).foregroundStyle(.white.opacity(0.6))
-        }
-    }
-
-    private var lastScanSubtitle: String {
-        guard let p = model.protection else { return L10n.tr("尚未扫描", "Ainda não escaneado") }
-        let rel = CleanupHistoryView.relativeDate(p.lastScanDate)
-        let junk = model.recoverableBytes.map { FileSizeFormatter.format($0) } ?? "—"
-        return L10n.tr("上次扫描 \(rel) · 可回收 \(junk) 垃圾",
-                       "Último escaneamento \(rel) · \(junk) de lixo recuperável")
-    }
-
-    // MARK: Storage
-
-    private var storageCard: some View {
-        let total = model.stats?.diskTotal ?? 0
-        return VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Label(L10n.tr("存储", "Armazenamento"), systemImage: "internaldrive")
-                    .font(.system(size: 14, weight: .bold)).foregroundStyle(.white)
-                Spacer()
-                Text(L10n.tr("共 \(FileSizeFormatter.format(total))", "\(FileSizeFormatter.format(total)) no total"))
-                    .font(.system(size: 11.5, design: .monospaced)).foregroundStyle(.white.opacity(0.6))
-            }
-            storageBar
-            LazyVGrid(columns: [GridItem(.flexible(), alignment: .leading),
-                                GridItem(.flexible(), alignment: .leading),
-                                GridItem(.flexible(), alignment: .leading)], spacing: 8) {
-                ForEach(model.storage) { slice in
-                    HStack(spacing: 6) {
-                        Circle().fill(slice.color).frame(width: 8, height: 8)
-                        Text(slice.label).font(.system(size: 11)).foregroundStyle(.white.opacity(0.8))
-                        Text(FileSizeFormatter.format(slice.bytes)).font(.system(size: 11, design: .monospaced)).foregroundStyle(.white.opacity(0.55))
-                    }
-                }
-            }
-        }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .dashCard()
-    }
-
-    private var storageBar: some View {
-        GeometryReader { geo in
-            let sum = max(model.storage.reduce(0) { $0 + $1.bytes }, 1)
-            HStack(spacing: 1.5) {
-                ForEach(model.storage) { slice in
-                    slice.color
-                        .frame(width: max(2, geo.size.width * CGFloat(Double(slice.bytes) / Double(sum))))
-                }
-            }
-            .clipShape(Capsule())
-        }
-        .frame(height: 12)
-    }
-
-    // MARK: Vitals
+    // MARK: Vitais (dados reais)
 
     private var vitalsCard: some View {
         VStack(alignment: .leading, spacing: 14) {
             Label(L10n.tr("系统健康", "Vitais do sistema"), systemImage: "waveform.path.ecg")
-                .font(.system(size: 14, weight: .bold)).foregroundStyle(.white)
-            vitalBar(label: "CPU", value: model.stats?.cpuUsage ?? 0, color: green)
-            vitalBar(label: L10n.tr("内存", "Memória"), value: model.stats?.memoryPressure ?? 0, color: amber)
-            vitalBar(label: L10n.tr("磁盘", "Disco"), value: diskUsedFraction, color: red)
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(.white)
+
+            vitalRow("CPU", model.stats?.cpuUsage ?? 0, green)
+            vitalRow(L10n.tr("内存", "Memória"), model.stats?.memoryPressure ?? 0, yellow)
+            vitalRow(L10n.tr("磁盘", "Disco"), diskUsedFraction, red)
+
             HStack(spacing: 6) {
-                Image(systemName: "clock").font(.system(size: 11)).foregroundStyle(.white.opacity(0.55))
+                Image(systemName: "clock")
                 Text(L10n.tr("运行时间 · \(uptimeText)", "Tempo ativo · \(uptimeText)"))
-                    .font(.system(size: 11.5)).foregroundStyle(.white.opacity(0.6))
             }
+            .font(.system(size: 12))
+            .foregroundStyle(.white.opacity(0.5))
             .padding(.top, 2)
         }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .dashCard()
+        .padding(20)
+        .glassCard()
     }
 
-    private func vitalBar(label: String, value: Double, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
+    private func vitalRow(_ name: String, _ value: Double, _ color: Color) -> some View {
+        VStack(spacing: 5) {
             HStack {
-                Text(label).font(.system(size: 12.5, weight: .semibold)).foregroundStyle(.white.opacity(0.85))
+                Text(name).font(.system(size: 13)).foregroundStyle(.white.opacity(0.85))
                 Spacer()
-                Text("\(Int((value * 100).rounded()))%").font(.system(size: 12.5, weight: .semibold, design: .monospaced)).foregroundStyle(.white)
+                Text("\(Int(value * 100))%")
+                    .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(.white)
+                    .contentTransition(.numericText())
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    Capsule().fill(Color.white.opacity(0.12))
-                    Capsule().fill(color)
-                        .frame(width: geo.size.width * min(max(value, 0), 1))
+                    Capsule().fill(.white.opacity(0.08))
+                    Capsule()
+                        .fill(LinearGradient(colors: [color.opacity(0.7), color],
+                                             startPoint: .leading, endPoint: .trailing))
+                        .frame(width: loaded ? geo.size.width * min(max(value, 0), 1) : 0)
+                        .shadow(color: color.opacity(0.7), radius: 5)
                 }
             }
-            .frame(height: 7)
+            .frame(height: 6)
+            .animation(.easeInOut(duration: 0.8), value: value)
         }
     }
 
@@ -212,46 +285,110 @@ struct HomeDashboardView: View {
         if h > 24 { return L10n.tr("\(h/24)天 \(h%24)小时", "\(h/24)d \(h%24)h") }
         return L10n.tr("\(h)小时 \(m)分", "\(h)h \(m)m")
     }
+}
 
-    // MARK: Quick cards
+// MARK: - Botão com brilho (DESIGN_SYSTEM §8.3)
 
-    private func quickCard(icon: String, tint: Color, title: String, subtitle: String,
-                           value: String, valueLabel: String, action: String, target: SidebarItem) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Image(systemName: icon).font(.system(size: 18, weight: .medium)).foregroundStyle(tint)
-                .frame(width: 42, height: 42)
-                .background(tint.opacity(0.16), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            Text(title).font(.system(size: 15, weight: .bold)).foregroundStyle(.white)
-            Text(subtitle).font(.system(size: 12)).foregroundStyle(.white.opacity(0.6))
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 6)
-            HStack(alignment: .firstTextBaseline) {
-                Text(value).font(.system(size: 21, weight: .bold, design: .monospaced)).foregroundStyle(.white)
-                Text(valueLabel).font(.system(size: 11.5)).foregroundStyle(.white.opacity(0.55))
-                Spacer()
-                Button { appState.selectedSidebarItem = target } label: {
-                    HStack(spacing: 3) {
-                        Text(action).font(.system(size: 12.5, weight: .bold))
-                        Image(systemName: "chevron.right").font(.system(size: 10, weight: .bold))
-                    }.foregroundStyle(Color.brand)
-                }.buttonStyle(.plain)
-            }
+struct GlowButton: View {
+    let title: String
+    let icon: String
+    let action: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            Label(title, systemImage: icon)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Color.black.opacity(0.8))
+                .padding(.horizontal, 18)
+                .padding(.vertical, 10)
+                .background(
+                    Capsule().fill(
+                        LinearGradient(colors: [Theme.accent, Theme.accent.opacity(0.8)],
+                                       startPoint: .top, endPoint: .bottom))
+                )
+                .overlay(Capsule().strokeBorder(.white.opacity(0.35), lineWidth: 0.8))
+                .shimmer(period: 3.8)
+                .shadow(color: Theme.accent.opacity(hovering ? 0.7 : 0.35),
+                        radius: hovering ? 20 : 10, y: 4)
+                .scaleEffect(hovering ? 1.04 : 1)
         }
-        .padding(18)
-        .frame(maxWidth: .infinity, minHeight: 150, alignment: .topLeading)
-        .dashCard()
+        .buttonStyle(.plain)
+        .animation(.spring(duration: 0.25), value: hovering)
+        .onHover { hovering = $0 }
     }
 }
 
-private extension View {
-    /// Dark translucent card used across the Home dashboard.
-    func dashCard(cornerRadius: CGFloat = 16) -> some View {
-        self
-            .background(Color.black.opacity(0.24), in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-            .background(.ultraThinMaterial.opacity(0.35), in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.08), lineWidth: 0.5)
+// MARK: - Card de ação inferior (DESIGN_SYSTEM §8)
+
+struct ActionCard: View {
+    let icon: String
+    let color: Color
+    let title: String
+    let subtitle: String
+    let value: String
+    let valueSuffix: String
+    var valueColor: Color = .white
+    let linkTitle: String
+    let action: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 13, style: .continuous)
+                    .fill(color.opacity(0.16))
+                    .frame(width: 46, height: 46)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 13, style: .continuous)
+                            .strokeBorder(color.opacity(0.35), lineWidth: 1))
+                Image(systemName: icon)
+                    .font(.system(size: 19, weight: .medium))
+                    .foregroundStyle(color)
+                    .shadow(color: color.opacity(0.9), radius: hovering ? 10 : 4)
             }
+            .rotationEffect(.degrees(hovering ? -6 : 0))
+
+            Text(title)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundStyle(.white)
+                .padding(.top, 4)
+
+            Text(subtitle)
+                .font(.system(size: 12))
+                .foregroundStyle(.white.opacity(0.55))
+                .lineLimit(1)
+
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                (Text(value).font(.system(size: 19, weight: .bold, design: .monospaced))
+                    .foregroundColor(valueColor)
+                 + Text(" " + valueSuffix).font(.system(size: 12))
+                    .foregroundColor(.white.opacity(0.55)))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+
+                Spacer(minLength: 8)
+
+                Button(action: action) {
+                    HStack(spacing: 3) {
+                        Text(linkTitle).font(.system(size: 12, weight: .semibold))
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 9, weight: .bold))
+                            .offset(x: hovering ? 3 : 0)
+                    }
+                    .foregroundStyle(Theme.accent)
+                    .fixedSize()
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.top, 6)
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, minHeight: 176, alignment: .topLeading)
+        .glassCard()
+        .tilt3D(maxAngle: 7)
+        .animation(.spring(duration: 0.3), value: hovering)
+        .onHover { hovering = $0 }
+        .onTapGesture(perform: action)
     }
 }

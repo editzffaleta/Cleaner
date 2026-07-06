@@ -100,6 +100,7 @@ public enum L10n {
     /// through model properties. Most UI strings use the two-argument overload
     /// so the original English expression can live beside the Chinese text.
     private static let englishFallbacks: [String: String] = [
+        "首页": "Início",
         "智能扫描": "Escaneamento Inteligente",
         "系统垃圾": "Lixo do Sistema",
         "邮件附件": "Anexos do Mail",

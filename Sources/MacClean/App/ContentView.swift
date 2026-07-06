@@ -168,6 +168,8 @@ struct ContentView: View {
     @ViewBuilder
     private func moduleView(for item: SidebarItem) -> some View {
         switch item {
+        case .home:
+            HomeDashboardView()
         case .smartScan:
             SmartScanView()
         case .systemJunk:

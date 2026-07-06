@@ -3,6 +3,7 @@ import MacCleanKit
 
 public enum SidebarItem: String, CaseIterable, Identifiable {
     // Main
+    case home = "首页"
     case smartScan = "智能扫描"
 
     // Cleanup
@@ -38,6 +39,7 @@ public enum SidebarItem: String, CaseIterable, Identifiable {
     /// Stable slug used in `macclean://module/<id>` deep links.
     public var deepLinkID: String {
         switch self {
+        case .home: "home"
         case .smartScan: "smart-scan"
         case .systemJunk: "system-junk"
         case .mailAttachments: "mail-attachments"
@@ -64,6 +66,7 @@ public enum SidebarItem: String, CaseIterable, Identifiable {
 
     public var icon: String {
         switch self {
+        case .home: "house.fill"
         case .smartScan: "sparkle.magnifyingglass"
         case .systemJunk: "trash.circle"
         case .mailAttachments: "paperclip.circle"
@@ -85,6 +88,7 @@ public enum SidebarItem: String, CaseIterable, Identifiable {
 
     public var theme: ModuleTheme {
         switch self {
+        case .home: .smartScan
         case .smartScan: .smartScan
         case .systemJunk, .mailAttachments, .trashBins: .cleanup
         case .malwareRemoval, .privacy: .protection
@@ -98,6 +102,7 @@ public enum SidebarItem: String, CaseIterable, Identifiable {
 
     public var section: SidebarSection {
         switch self {
+        case .home: .main
         case .smartScan: .main
         case .systemJunk, .mailAttachments, .trashBins: .cleanup
         case .malwareRemoval, .privacy: .protection

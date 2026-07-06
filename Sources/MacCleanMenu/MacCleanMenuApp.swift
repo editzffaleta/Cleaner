@@ -167,6 +167,7 @@ struct MenuContentView: View {
                            center: .topTrailing, startRadius: 0, endRadius: 300)
             RadialGradient(colors: [Color(red: 0.145, green: 0.47, blue: 0.86).opacity(0.13), .clear],
                            center: .bottomLeading, startRadius: 0, endRadius: 280)
+            WidgetParticleField(tint: MenuPalette.accent)
         }
         .ignoresSafeArea()
     }
@@ -250,6 +251,7 @@ struct MenuContentView: View {
         .padding(.horizontal, 13)
         .padding(.vertical, 11)
         .cardSurface()
+        .overlay(WidgetLightSweep(cornerRadius: 18, period: 5.5))
         .padding(.horizontal, 15)
         .padding(.top, 2)
     }
@@ -529,6 +531,7 @@ struct MenuContentView: View {
                     LinearGradient(colors: [MenuPalette.accent.blend(withWhite: 0.08), MenuPalette.accent.blend(withBlack: 0.28)],
                                    startPoint: .top, endPoint: .bottom),
                     in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(WidgetShimmer(period: 3.6))
                 .shadow(color: MenuPalette.accent.opacity(0.55), radius: 10, y: 5)
             }.buttonStyle(.plain)
         }
@@ -608,13 +611,7 @@ struct HealthBars: View {
 
 struct PulsingDot: View {
     var body: some View {
-        Circle()
-            .fill(MenuPalette.green)
-            .frame(width: 7, height: 7)
-            .overlay {
-                Circle().strokeBorder(MenuPalette.green.opacity(0.35), lineWidth: 3)
-                    .frame(width: 13, height: 13)
-            }
+        WidgetLiveDot(color: MenuPalette.green)
     }
 }
 
@@ -650,9 +647,12 @@ struct RingGauge: View {
             Circle().stroke(Color.white.opacity(0.08), lineWidth: 7)
             Circle()
                 .trim(from: 0, to: min(max(value, 0), 1))
-                .stroke(color, style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                .stroke(
+                    AngularGradient(colors: [color.opacity(0.4), color], center: .center,
+                                    startAngle: .degrees(0), endAngle: .degrees(360 * min(max(value, 0), 1))),
+                    style: StrokeStyle(lineWidth: 7, lineCap: .round))
                 .rotationEffect(.degrees(-90))
-                .shadow(color: color.opacity(0.45), radius: 4)
+                .shadow(color: color.opacity(0.7), radius: 8)
                 .animation(.spring(response: 0.9, dampingFraction: 0.85), value: value)
             HStack(alignment: .firstTextBaseline, spacing: 0) {
                 Text(percent)

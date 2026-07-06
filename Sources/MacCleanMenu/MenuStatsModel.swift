@@ -65,12 +65,13 @@ final class MenuStatsModel {
                 networkSpeed = n
             }
             protection = SharedAppState.protectionStatus
-            // Top apps by memory — collected on the main actor (holds NSImages).
-            // Cheap (~one syscall per visible app); refreshed every tick so the
-            // list feels live like the rings.
-            topApps = TopAppsCollector.collect()
             tickCount += 1
             if tickCount % 10 == 1 {
+                // Top apps by memory — collected on the main actor (holds
+                // NSImages). Refreshed on the slow cadence (not every tick) so
+                // the list doesn't constantly re-sort as footprints wobble,
+                // which made the popover's rows shuffle.
+                topApps = TopAppsCollector.collect()
                 if let d = await timed("devices", budget: .seconds(3), { await self.devicesCollector.collect() }) {
                     devices = d
                 }

@@ -571,17 +571,22 @@ struct HealthBars: View {
     }
 }
 
-// MARK: - Pulsing "live" dot
+// MARK: - "Live" dot
+//
+// Static, on purpose. A `repeatForever` animation here makes the
+// `MenuBarExtra(.window)` recompute its size every frame, so the popover
+// jitters up and down. A fixed dot with a soft halo reads as "live" without
+// driving continuous relayout.
 
 struct PulsingDot: View {
-    @State private var on = false
     var body: some View {
         Circle()
             .fill(MenuPalette.green)
             .frame(width: 7, height: 7)
-            .opacity(on ? 0.45 : 1)
-            .shadow(color: MenuPalette.green.opacity(on ? 0 : 0.6), radius: on ? 5 : 0)
-            .onAppear { withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) { on = true } }
+            .overlay {
+                Circle().strokeBorder(MenuPalette.green.opacity(0.35), lineWidth: 3)
+                    .frame(width: 13, height: 13)
+            }
     }
 }
 

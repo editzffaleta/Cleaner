@@ -1,85 +1,73 @@
-# Security Policy
+# Política de Segurança
 
-Mac Sai deletes files on your Mac (at your user's privilege level) and can run a few maintenance commands via the standard macOS administrator prompt, so security matters more here than for most apps.
+O Cleaner exclui arquivos no seu Mac (com o nível de privilégio do seu usuário) e pode executar alguns comandos de manutenção através do prompt padrão de administrador do macOS. Por isso, segurança importa aqui mais do que na maioria dos apps.
 
-## Reporting a vulnerability
+> O Cleaner é um fork de tradução do projeto original [iliyami/MacSai](https://github.com/iliyami/MacSai). Falhas no comportamento do app (não relacionadas à tradução) geralmente também existem no projeto original e vale relatá-las lá.
 
-**Please do not open public GitHub issues for security vulnerabilities.**
+## Relatando uma vulnerabilidade
 
-Report them privately via [GitHub's Private Vulnerability Reporting](https://github.com/iliyami/MacSai/security/advisories/new):
+**Por favor, não abra issues públicas no GitHub para vulnerabilidades de segurança.**
 
-1. Open the [Security tab](https://github.com/iliyami/MacSai/security) on the repository
-2. Click **Report a vulnerability**
-3. Include: the affected file or feature, reproduction steps, expected vs actual behavior, and a suggested fix if you have one
+Relate-as de forma privada pelo [Relato Privado de Vulnerabilidades do GitHub](https://github.com/editzffaleta/Cleaner/security/advisories/new):
 
-Expect an initial response within **72 hours**. Issues that risk data loss get same-day attention.
+1. Abra a [aba Security](https://github.com/editzffaleta/Cleaner/security) do repositório
+2. Clique em **Report a vulnerability**
+3. Inclua: o arquivo ou recurso afetado, os passos para reproduzir, o comportamento esperado vs. o real e uma sugestão de correção, se você tiver uma
 
-## Supported versions
+## Versões suportadas
 
-Only the latest release on `main` is supported. Please upgrade rather than asking for backports.
+Apenas a última versão no branch `main` é suportada. Por favor, atualize em vez de pedir correções para versões antigas.
 
-| Version | Supported |
-|---------|-----------|
-| `main` (latest release) | ✅ |
-| Older releases | ❌ |
+| Versão | Suportada |
+|--------|-----------|
+| `main` (última versão) | ✅ |
+| Versões antigas | ❌ |
 
-## In scope
+## Dentro do escopo
 
-Reports about the following areas get priority:
+Relatos sobre as seguintes áreas têm prioridade:
 
-- **`Sources/MacCleanKit/SafetyGuard.swift`**: bypasses of the protected-paths blocklist, the 10,000-file cap, or the symlink TOCTOU re-resolution
-- **`Sources/MacClean/Core/Cleaner/CleaningEngine.swift`**: anything that causes data loss outside the intended scan results
-- **`Sources/MacClean/Modules/Maintenance/MaintenanceModule.swift`**: anything that turns the administrator-prompt maintenance commands into arbitrary command execution
-- **Update checks**: a tampered third-party update feed steering the user to a malicious download
-- **Network exfiltration**: Mac Sai's only outbound calls are its own update check (the GitHub releases API) and reading third-party apps' update feeds; report any other network activity you observe
-- **TCC / Full Disk Access**: any path to silently gain or abuse FDA
+- **`Sources/MacCleanKit/SafetyGuard.swift`**: burlas da lista de bloqueio de caminhos protegidos, do limite de 10.000 arquivos ou da re-resolução de symlinks (TOCTOU)
+- **`Sources/MacClean/Core/Cleaner/CleaningEngine.swift`**: qualquer coisa que cause perda de dados fora dos resultados de escaneamento pretendidos
+- **`Sources/MacClean/Modules/Maintenance/MaintenanceModule.swift`**: qualquer coisa que transforme os comandos de manutenção (executados via prompt de administrador) em execução arbitrária de comandos
+- **Verificações de atualização**: um feed de atualização de terceiros adulterado que leve o usuário a um download malicioso
+- **Exfiltração pela rede**: as únicas chamadas de saída do Cleaner são a própria verificação de atualização (a API de releases do GitHub) e a leitura dos feeds de atualização de apps de terceiros; relate qualquer outra atividade de rede que você observar
+- **TCC / Acesso Total ao Disco**: qualquer caminho para obter ou abusar do Acesso Total ao Disco silenciosamente
 
-## Out of scope
+## Fora do escopo
 
-- General macOS bugs not specific to Mac Sai
-- Findings that require an already-root or already-compromised machine
-- Social engineering or physical access to an unlocked Mac
+- Bugs gerais do macOS que não sejam específicos do Cleaner
+- Achados que exijam uma máquina já com acesso root ou já comprometida
+- Engenharia social ou acesso físico a um Mac desbloqueado
 
-## What we ask of you
+## O que pedimos a você
 
-- Give us a reasonable window to fix before public disclosure: **14 days for non-critical issues**, **immediate coordination for anything that risks user data**
-- Don't test against other people's machines
-- Don't pivot from a found vulnerability to access user data
+- Dê-nos um prazo razoável para corrigir antes da divulgação pública: **14 dias para problemas não críticos**, **coordenação imediata para qualquer coisa que arrisque dados do usuário**
+- Não teste contra máquinas de outras pessoas
+- Não use uma vulnerabilidade encontrada para acessar dados de usuários
 
-## What you get
+## O que você recebe
 
-- Credit in the release notes (or stay anonymous if you prefer)
-- Acknowledgment in this file for significant findings
-- Our genuine thanks. Mac Sai is safer because of you
+- Crédito nas notas de versão (ou anonimato, se preferir)
+- Reconhecimento neste arquivo por achados significativos
+- Nossos sinceros agradecimentos. O Cleaner fica mais seguro por sua causa
 
-## Verifying a release is genuine
+## Verificando que uma cópia é confiável
 
-Every release is signed with our Apple **Developer ID** and **notarized by Apple**, so your own Mac can confirm it is genuinely from us and has not been modified. Verify a downloaded DMG without trusting us:
-
-```bash
-# 1. The DMG carries a stapled Apple notarization ticket
-xcrun stapler validate MacSai-1.9.0.dmg
-
-# 2. Signed by our Developer ID, chaining to Apple
-codesign -dvvv "Mac Sai.app"   # Authority: Developer ID Application: Iliya Mirzaei (H3XLS95QV4)
-
-# 3. Gatekeeper's own verdict
-spctl -a -vvv "Mac Sai.app"    # accepted, source=Notarized Developer ID
-```
-
-`source=Notarized Developer ID` is your Mac confirming with Apple that this exact binary was notarized and signed by team `H3XLS95QV4`. No one without our Developer ID certificate can reproduce that result.
-
-Notarization proves who signed a build, not that it matches this repo. To additionally confirm a release was built from the public source, build it yourself:
+O Cleaner é distribuído como **código-fonte** e compilado localmente pelo próprio usuário (assinatura ad-hoc), então a melhor forma de confiar no que roda no seu Mac é **compilar a partir do código-fonte** e ler o código, que é aberto:
 
 ```bash
-git clone https://github.com/iliyami/MacSai.git
-cd MacSai
-git checkout v1.9.0
-bash scripts/build-dmg.sh
+git clone https://github.com/editzffaleta/Cleaner.git
+cd Cleaner
+swift build
+swift test            # a suíte de testes deve passar sem falhas
+./scripts/dev-install.sh
 ```
 
-The DMG is not bit-for-bit reproducible (signatures embed timestamps and nonces), but the source-to-binary build is straightforward and the behavior should match.
+Como todo o código-fonte é público, você não precisa confiar na nossa palavra: pode ler cada linha, rodar os testes e compilar você mesmo.
 
-## Past advisories
+> Observação: o projeto original [iliyami/MacSai](https://github.com/iliyami/MacSai) distribui versões assinadas com **Developer ID da Apple** e **notarizadas pela Apple**. As compilações locais deste fork **não** são notarizadas, então o macOS pode pedir para você reautorizar o Acesso Total ao Disco a cada nova compilação.
 
-None yet. Will be linked here when applicable.
+## Avisos anteriores
+
+Nenhum até o momento. Serão listados aqui quando aplicável.

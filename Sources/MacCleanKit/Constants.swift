@@ -207,10 +207,10 @@ public enum MCConstants {
 
     // MARK: - Project links
 
-    public static let repoURL = URL(string: "https://github.com/iliyami/MacSai")!
-    public static let issuesURL = URL(string: "https://github.com/iliyami/MacSai/issues/new/choose")!
-    public static let releasesURL = URL(string: "https://github.com/iliyami/MacSai/releases")!
-    public static let latestReleaseAPI = URL(string: "https://api.github.com/repos/iliyami/MacSai/releases/latest")!
+    public static let repoURL = URL(string: "https://github.com/editzffaleta/Cleaner")!
+    public static let issuesURL = URL(string: "https://github.com/editzffaleta/Cleaner/issues/new")!
+    public static let releasesURL = URL(string: "https://github.com/editzffaleta/Cleaner/releases")!
+    public static let latestReleaseAPI = URL(string: "https://api.github.com/repos/editzffaleta/Cleaner/releases/latest")!
 
     // MARK: - App version
     //

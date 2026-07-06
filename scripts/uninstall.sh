@@ -1,13 +1,13 @@
 #!/bin/bash
-# Completely remove Mac Sai and its support files.
-# Usage: curl -fsSL https://raw.githubusercontent.com/iliyami/MacSai/main/scripts/uninstall.sh | bash
+# Completely remove Cleaner and its support files.
+# Usage: curl -fsSL https://raw.githubusercontent.com/editzffaleta/Cleaner/main/scripts/uninstall.sh | bash
 #
-# Homebrew users can instead run:  brew uninstall --zap --cask mac-sai
+# Homebrew users can instead run:  brew uninstall --zap --cask cleaner
 # (the --zap flag removes the same support files via the cask's zap stanza).
 
 set -euo pipefail
 
-APP_NAME="Mac Sai.app"
+APP_NAME="Cleaner.app"
 INSTALL_DIR="/Applications"
 
 cyan() { printf "\033[36m%s\033[0m\n" "$1"; }
@@ -21,7 +21,7 @@ if [ -z "${HOME:-}" ]; then
 fi
 
 # Exact, explicit paths only (no globs, no wildcards) so this can never delete
-# more than Mac Sai's own files.
+# more than Cleaner's own files.
 SUPPORT_PATHS=(
   "$HOME/Library/Application Support/MacClean"
   "$HOME/Library/Caches/com.macclean.app"
@@ -32,17 +32,17 @@ SUPPORT_PATHS=(
   "$HOME/Library/Saved Application State/com.macclean.app.savedState"
 )
 
-cyan "Quitting Mac Sai if it is running..."
-osascript -e 'tell application "Mac Sai" to quit' >/dev/null 2>&1 || true
+cyan "Quitting Cleaner if it is running..."
+osascript -e 'tell application "Cleaner" to quit' >/dev/null 2>&1 || true
 # The menu-bar helper is a separate process.
 pkill -f "MacCleanMenu" >/dev/null 2>&1 || true
 
 # Prefer Homebrew's own uninstall when the cask is installed, so brew's receipt
 # stays consistent. --zap removes the support files too, so we're done after it.
-if command -v brew >/dev/null 2>&1 && brew list --cask mac-sai >/dev/null 2>&1; then
+if command -v brew >/dev/null 2>&1 && brew list --cask cleaner >/dev/null 2>&1; then
   cyan "Removing the Homebrew cask (with --zap to clear support files)..."
-  brew uninstall --zap --cask mac-sai
-  green "✓ Mac Sai and its support files were removed via Homebrew."
+  brew uninstall --zap --cask cleaner
+  green "✓ Cleaner and its support files were removed via Homebrew."
   exit 0
 fi
 
@@ -62,7 +62,7 @@ defaults delete com.macclean.app >/dev/null 2>&1 || true
 defaults delete com.macclean.shared >/dev/null 2>&1 || true
 
 green ""
-green "✓ Mac Sai has been uninstalled."
+green "✓ Cleaner has been uninstalled."
 echo ""
-echo "If Mac Sai still appears under System Settings → General → Login Items,"
+echo "If Cleaner still appears under System Settings → General → Login Items,"
 echo "remove the leftover entry there; macOS clears it once the app is gone."

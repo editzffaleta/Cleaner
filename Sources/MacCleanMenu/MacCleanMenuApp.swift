@@ -114,12 +114,20 @@ struct MenuContentView: View {
             VStack(spacing: 0) {
                 header
                 if let stats {
-                    healthCard(stats)
-                    statGrid(stats)
-                    activityHeader
-                    chips(stats)
-                    if !tips.isEmpty { recommendationCard }
-                    connectedCard
+                    // The widget is tall; keep the header and footer pinned and
+                    // let the middle scroll so everything stays reachable even
+                    // when the popover would otherwise overflow the screen.
+                    ScrollView(.vertical, showsIndicators: false) {
+                        VStack(spacing: 0) {
+                            healthCard(stats)
+                            statGrid(stats)
+                            activityHeader
+                            chips(stats)
+                            if !tips.isEmpty { recommendationCard }
+                            connectedCard
+                        }
+                    }
+                    .frame(maxHeight: 540)
                     footer
                 } else {
                     ProgressView().controlSize(.small).tint(MenuPalette.accent)

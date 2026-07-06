@@ -15,6 +15,7 @@ struct UninstallerView: View {
     @State private var appPendingUninstall: AppInfo?
     @State private var filter: AppFilter = .all
     @State private var searchText = ""
+    @State private var isDropTargeted = false
 
     enum AppFilter: String, CaseIterable {
         case all = "全部"
@@ -40,6 +41,14 @@ struct UninstallerView: View {
                         .foregroundStyle(.primary.opacity(0.6))
                 }
                 Spacer()
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.down.doc.fill").font(.system(size: 11))
+                    Text(L10n.tr("拖放应用到此处卸载", "Arraste um app para cá para desinstalar"))
+                        .font(.system(size: 11, weight: .medium))
+                }
+                .foregroundStyle(Color.brand)
+                .padding(.horizontal, 10).padding(.vertical, 6)
+                .background(Color.brand.opacity(0.12), in: Capsule())
             }
             .padding(.horizontal, 24)
             .padding(.vertical, 16)
@@ -113,6 +122,62 @@ struct UninstallerView: View {
         } message: { app in
             Text(L10n.tr("\(app.name) 及其关联文件将被移到废纸篓。如有需要，你可以从废纸篓恢复。", "O \(app.name) e seus arquivos associados serão movidos para a Lixeira. Você pode restaurá-los da Lixeira se precisar."))
         }
+        // Drag an app from Finder/Dock onto the window to uninstall it.
+        .dropDestination(for: URL.self) { urls, _ in
+            handleDroppedApps(urls)
+            return true
+        } isTargeted: { isDropTargeted = $0 }
+        .overlay {
+            if isDropTargeted { dropOverlay }
+        }
+    }
+
+    private var dropOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.45)
+            VStack(spacing: 12) {
+                Image(systemName: "trash.circle.fill")
+                    .font(.system(size: 52))
+                    .foregroundStyle(Color.brand)
+                Text(L10n.tr("拖放此处卸载应用", "Solte o app aqui para desinstalar"))
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
+            .padding(40)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(Color.brand, style: StrokeStyle(lineWidth: 2, dash: [8, 5]))
+            }
+        }
+        .ignoresSafeArea()
+        .transition(.opacity)
+    }
+
+    /// Resolve a dropped `.app` to an `AppInfo` and open the uninstall
+    /// confirmation. Prefers the already-discovered entry; otherwise builds one
+    /// on the fly so apps outside the standard folders still work.
+    private func handleDroppedApps(_ urls: [URL]) {
+        guard let appURL = urls.first(where: { $0.pathExtension == "app" }) else { return }
+        let target = appURL.resolvingSymlinksInPath().standardizedFileURL
+        if let match = apps.first(where: {
+            $0.path.resolvingSymlinksInPath().standardizedFileURL == target
+        }) {
+            selectApp(match)
+            return
+        }
+        Task {
+            if let info = await discovery.appInfo(at: appURL) {
+                selectApp(info)
+            }
+        }
+    }
+
+    private func selectApp(_ app: AppInfo) {
+        guard !safetyGuard.isProtectedApp(app.bundleIdentifier) else { return }
+        selectedApp = app
+        loadAssociatedFiles(for: app)
+        appPendingUninstall = app
     }
 
     private var filteredApps: [AppInfo] {

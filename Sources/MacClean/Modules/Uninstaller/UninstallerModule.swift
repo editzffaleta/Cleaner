@@ -51,6 +51,14 @@ public actor AppDiscovery {
         return apps.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
+    /// Build `AppInfo` for a single `.app` bundle (e.g. one dropped onto the
+    /// window), even if it isn't in the standard app folders. Returns nil if
+    /// the URL isn't a readable app bundle.
+    public func appInfo(at url: URL) -> AppInfo? {
+        guard url.pathExtension == "app" else { return nil }
+        return appInfo(from: url)
+    }
+
     private func appInfo(from url: URL) -> AppInfo? {
         let infoPlistURL = url.appending(path: "Contents/Info.plist")
         guard let data = try? Data(contentsOf: infoPlistURL),

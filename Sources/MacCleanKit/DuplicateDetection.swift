@@ -136,6 +136,36 @@ public enum DuplicateDetection {
         }
         .sorted { $0.wastedSpace > $1.wastedSpace }
     }
+
+    /// Which copy of each duplicate set to keep.
+    public enum KeepStrategy: String, Sendable, CaseIterable, Identifiable {
+        case oldest, newest
+        public var id: String { rawValue }
+    }
+
+    /// Re-pick the kept copy of every display group according to `keep`, turning
+    /// the rest into removable duplicates. Operates on `allFiles` so it can be
+    /// re-applied repeatedly without losing candidates. Group `id`s are kept so
+    /// the UI's expanded state survives the change.
+    public static func rebalance(_ groups: [DuplicateDisplayGroup], keep: KeepStrategy) -> [DuplicateDisplayGroup] {
+        groups.compactMap { g -> DuplicateDisplayGroup? in
+            let files = g.allFiles
+            guard files.count > 1 else { return nil }
+            let kept: FileItem
+            switch keep {
+            case .newest: kept = files.max { fileDate($0) < fileDate($1) }!
+            case .oldest: kept = files.min { fileDate($0) < fileDate($1) }!
+            }
+            let dups = files.filter { $0.url != kept.url }
+            guard !dups.isEmpty else { return nil }
+            return DuplicateDisplayGroup(id: g.id, original: kept, duplicates: dups)
+        }
+        .sorted { $0.wastedSpace > $1.wastedSpace }
+    }
+
+    private static func fileDate(_ f: FileItem) -> Date {
+        f.modificationDate ?? f.creationDate ?? .distantPast
+    }
 }
 
 /// One set of identical files, split into the copy we keep (`original`) and

@@ -12,6 +12,7 @@ struct DuplicatesView: View {
     /// it survives the AnyView rebuild that happens on each checkbox toggle.
     @State private var expandedGroups: Set<UUID> = []
     @State private var selectedItems: Set<URL> = []
+    @State private var keepStrategy: DuplicateDetection.KeepStrategy = .oldest
     @State private var isScanning = false
     @State private var scanProgress: Double = 0
     @State private var scanPhase = ""
@@ -56,11 +57,14 @@ struct DuplicatesView: View {
                     onReset: reset,
                     resultsContent: {
                         AnyView(
-                            DuplicateGroupsList(
-                                groups: displayGroups,
-                                selectedItems: $selectedItems,
-                                expanded: $expandedGroups
-                            )
+                            VStack(spacing: 0) {
+                                keepStrategyBar
+                                DuplicateGroupsList(
+                                    groups: displayGroups,
+                                    selectedItems: $selectedItems,
+                                    expanded: $expandedGroups
+                                )
+                            }
                         )
                     }
                 )
@@ -83,6 +87,39 @@ struct DuplicatesView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    /// Lets the user choose which copy of each set to keep; the rest are
+    /// re-selected for removal automatically.
+    private var keepStrategyBar: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "sparkles").font(.system(size: 12)).foregroundStyle(Color.brand)
+            Text(L10n.tr("保留副本", "Manter a cópia"))
+                .font(.system(size: 12, weight: .medium)).foregroundStyle(.primary.opacity(0.8))
+            Picker("", selection: $keepStrategy) {
+                Text(L10n.tr("最旧", "Mais antiga")).tag(DuplicateDetection.KeepStrategy.oldest)
+                Text(L10n.tr("最新", "Mais recente")).tag(DuplicateDetection.KeepStrategy.newest)
+            }
+            .pickerStyle(.segmented)
+            .frame(width: 220)
+            .labelsHidden()
+            .onChange(of: keepStrategy) { _, _ in applyKeepStrategy() }
+            Spacer()
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 10)
+    }
+
+    /// Re-pick the kept copy in every group per `keepStrategy`, then re-select
+    /// all the resulting removable copies.
+    private func applyKeepStrategy() {
+        let rebalanced = DuplicateDetection.rebalance(displayGroups, keep: keepStrategy)
+        displayGroups = rebalanced
+        let removable = rebalanced.flatMap(\.duplicates)
+        results = removable.isEmpty
+            ? []
+            : [ScanResult(category: .duplicates, items: removable, autoSelect: false)]
+        selectedItems = Set(removable.map(\.url))
     }
 
     private var idleView: some View {

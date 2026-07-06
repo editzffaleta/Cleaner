@@ -102,8 +102,21 @@ struct SmartScanView: View {
                 title: L10n.tr("扫描", "Escanear"),
                 subtitle: L10n.tr("一键清理", "Limpeza com um clique"),
                 theme: .smartScan,
-                action: startScan
+                action: { startScan() }
             )
+
+            Button { startScan(autoClean: true) } label: {
+                HStack(spacing: 7) {
+                    Image(systemName: "bolt.fill").font(.system(size: 12, weight: .bold))
+                    Text(L10n.tr("自动清理（跳过检查）", "Limpeza automática (sem revisar)"))
+                        .font(.system(size: 13, weight: .semibold))
+                }
+                .foregroundStyle(Color.brand)
+                .padding(.horizontal, 16).padding(.vertical, 9)
+                .background(Color.brand.opacity(0.12), in: Capsule())
+            }
+            .buttonStyle(.plain)
+            .help(L10n.tr("扫描并立即清理安全的可再生文件", "Escaneia e limpa na hora os arquivos seguros e recriáveis"))
 
             Spacer()
         }
@@ -424,7 +437,7 @@ struct SmartScanView: View {
 
     // MARK: - Actions
 
-    private func startScan() {
+    private func startScan(autoClean: Bool = false) {
         completedModules = []
         currentModuleName = ""
 
@@ -483,13 +496,19 @@ struct SmartScanView: View {
                     } else {
                         cleanResults = SmartScanCleanup.allResults(from: results)
                         selectedItems = SmartScanCleanup.defaultSelection(from: results)
-                        scanState = .results(
-                            cleanup: totalSize,
-                            protection: 0,
-                            performance: 0,
-                            totalSize: totalSize,
-                            moduleResults: results
-                        )
+                        // One-click mode: skip the review and clean the
+                        // auto-selected (safe, regenerable) items right away.
+                        if autoClean && !selectedItems.isEmpty {
+                            runCleanup()
+                        } else {
+                            scanState = .results(
+                                cleanup: totalSize,
+                                protection: 0,
+                                performance: 0,
+                                totalSize: totalSize,
+                                moduleResults: results
+                            )
+                        }
                     }
                     return
 

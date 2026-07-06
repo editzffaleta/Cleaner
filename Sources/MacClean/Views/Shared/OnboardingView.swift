@@ -44,7 +44,7 @@ struct OnboardingView: View {
                 HStack(spacing: 6) {
                     ForEach(0..<4, id: \.self) { i in
                         Circle()
-                            .fill(i == currentStep ? Color.accentColor : Color.secondary.opacity(0.3))
+                            .fill(i == currentStep ? Color.brand : Color.secondary.opacity(0.3))
                             .frame(width: 8, height: 8)
                     }
                 }
@@ -157,7 +157,7 @@ struct OnboardingView: View {
             Text(number)
                 .font(.system(size: 12, weight: .bold))
                 .frame(width: 22, height: 22)
-                .background(Color.accentColor)
+                .background(Color.brand)
                 .foregroundStyle(.primary)
                 .clipShape(Circle())
             Text(text)

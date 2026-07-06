@@ -17,7 +17,7 @@
 
 set -euo pipefail
 
-APP_NAME="Mac Sai"
+APP_NAME="Cleaner"
 BUNDLE_ID="com.macclean.app"
 VERSION="${VERSION:-$(cat VERSION 2>/dev/null | tr -d '[:space:]' || echo '1.0.0')}"
 # BUILD_DIR is resolved AFTER the build via `swift build --show-bin-path`:

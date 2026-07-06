@@ -196,7 +196,7 @@ public struct SidebarView: View {
             HStack(spacing: 8) {
                 Image(systemName: "gearshape")
                     .font(.system(size: 13))
-                    .foregroundStyle(selection == .settings ? Color.accentColor : Color.secondary)
+                    .foregroundStyle(selection == .settings ? Color.brand : Color.secondary)
                 Text(L10n.tr("设置", "Ajustes"))
                     .font(.system(size: 13, weight: .medium))
                 Spacer()

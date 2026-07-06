@@ -121,12 +121,12 @@ struct ContentView: View {
             switch pending.action {
             case .brewCommand(let cmd):
                 Text(L10n.tr(
-                    "Mac Sai \(pending.version) 已发布。使用 Homebrew 升级：\n\(cmd)",
-                    "O Mac Sai \(pending.version) está disponível. Atualize com o Homebrew:\n\(cmd)"))
+                    "Cleaner \(pending.version) 已发布。使用 Homebrew 升级：\n\(cmd)",
+                    "O Cleaner \(pending.version) está disponível. Atualize com o Homebrew:\n\(cmd)"))
             case .openRelease:
                 Text(L10n.tr(
-                    "Mac Sai \(pending.version) 已发布。",
-                    "O Mac Sai \(pending.version) está disponível."))
+                    "Cleaner \(pending.version) 已发布。",
+                    "O Cleaner \(pending.version) está disponível."))
             }
         }
     }

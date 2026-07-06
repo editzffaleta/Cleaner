@@ -2,6 +2,10 @@ import SwiftUI
 import AppKit
 
 extension Color {
+    /// Cor principal do app (azul turquesa). Usada como accent/tint em botões,
+    /// seleções e destaques de toda a interface do Cleaner.
+    public static let brand = Color(red: 0.05, green: 0.67, blue: 0.72)
+
     /// A color that resolves to `light` or `dark` based on the active
     /// appearance, so the same value renders correctly in both Light and Dark
     /// without threading `colorScheme` through every view.
@@ -47,9 +51,9 @@ public enum ModuleTheme {
     public var colors: [Color] {
         switch self {
         case .smartScan:
-            [Color(light: Color(red: 0.94, green: 0.91, blue: 0.99), dark: Color(red: 0.22, green: 0.12, blue: 0.55)),
-             Color(light: Color(red: 0.90, green: 0.85, blue: 0.98), dark: Color(red: 0.42, green: 0.25, blue: 0.82)),
-             Color(light: Color(red: 0.86, green: 0.80, blue: 0.97), dark: Color(red: 0.55, green: 0.38, blue: 0.92))]
+            [Color(light: Color(red: 0.88, green: 0.97, blue: 0.98), dark: Color(red: 0.03, green: 0.38, blue: 0.44)),
+             Color(light: Color(red: 0.82, green: 0.95, blue: 0.97), dark: Color(red: 0.06, green: 0.54, blue: 0.60)),
+             Color(light: Color(red: 0.76, green: 0.93, blue: 0.96), dark: Color(red: 0.10, green: 0.68, blue: 0.73))]
         case .cleanup:
             [Color(light: Color(red: 0.90, green: 0.97, blue: 0.93), dark: Color(red: 0.06, green: 0.38, blue: 0.25)),
              Color(light: Color(red: 0.85, green: 0.95, blue: 0.89), dark: Color(red: 0.12, green: 0.55, blue: 0.35)),
@@ -81,7 +85,7 @@ public enum ModuleTheme {
     public var buttonColors: [Color] {
         switch self {
         case .smartScan:
-            [Color(red: 0.35, green: 0.22, blue: 0.72), Color(red: 0.52, green: 0.35, blue: 0.88)]
+            [Color(red: 0.04, green: 0.55, blue: 0.62), Color(red: 0.09, green: 0.74, blue: 0.78)]
         case .cleanup:
             [Color(red: 0.15, green: 0.52, blue: 0.35), Color(red: 0.28, green: 0.68, blue: 0.45)]
         case .protection:
@@ -101,7 +105,7 @@ public enum ModuleTheme {
     /// background) so it has contrast on both the light sidebar and dark panels.
     public var accentColor: Color {
         switch self {
-        case .smartScan: Color(red: 0.42, green: 0.25, blue: 0.82)
+        case .smartScan: Color(red: 0.05, green: 0.67, blue: 0.72)
         case .cleanup: Color(red: 0.12, green: 0.55, blue: 0.35)
         case .protection: Color(red: 0.78, green: 0.22, blue: 0.18)
         case .performance: Color(red: 0.78, green: 0.52, blue: 0.10)

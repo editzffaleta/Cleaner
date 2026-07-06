@@ -165,7 +165,7 @@ struct UninstallerView: View {
                 }
                 .buttonStyle(.plain)
                 .padding(.vertical, 2)
-                .background(selectedApp?.id == app.id ? Color.accentColor.opacity(0.15) : .clear)
+                .background(selectedApp?.id == app.id ? Color.brand.opacity(0.15) : .clear)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
             }
         }

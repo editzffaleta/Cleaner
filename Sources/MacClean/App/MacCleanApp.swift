@@ -30,11 +30,13 @@ struct MacCleanApp: App {
         Window(MCConstants.appName, id: "main") {
             ContentView()
                 .environment(appState)
+                .tint(Color.brand)
                 .environment(\.locale, Locale(identifier: appLanguage.localeIdentifier))
                 .id(appLanguage.rawValue)
                 .frame(minWidth: 800, minHeight: 550)
                 .sheet(isPresented: $showOnboarding) {
                     OnboardingView(isPresented: $showOnboarding)
+                        .tint(Color.brand)
                         .environment(\.locale, Locale(identifier: appLanguage.localeIdentifier))
                         .id(appLanguage.rawValue)
                 }

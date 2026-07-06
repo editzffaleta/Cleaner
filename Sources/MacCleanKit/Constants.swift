@@ -1,7 +1,7 @@
 import Foundation
 
 public enum MCConstants {
-    public static let appName = "Mac Sai"
+    public static let appName = "Cleaner"
     public static let bundleIdentifier = "com.macclean.app"
     public static let helperBundleIdentifier = "com.macclean.helper"
     public static let menuBundleIdentifier = "com.macclean.menu"

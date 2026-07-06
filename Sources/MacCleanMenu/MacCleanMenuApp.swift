@@ -108,6 +108,11 @@ struct MenuContentView: View {
     let topApps: [RunningAppInfo]
     let onDismissTip: (String) -> Void
 
+    // Measured height of the scrollable content, so the ScrollView can be sized
+    // to its content (capped by the screen) instead of collapsing to nothing —
+    // MenuBarExtra(.window) otherwise squeezes a flexible ScrollView small.
+    @State private var contentHeight: CGFloat = 700
+
     var body: some View {
         ZStack {
             background
@@ -126,8 +131,12 @@ struct MenuContentView: View {
                             if !tips.isEmpty { recommendationCard }
                             connectedCard
                         }
+                        .background(GeometryReader { g in
+                            Color.clear.preference(key: ContentHeightKey.self, value: g.size.height)
+                        })
                     }
-                    .frame(maxHeight: scrollMaxHeight)
+                    .frame(height: min(contentHeight, scrollMaxHeight))
+                    .onPreferenceChange(ContentHeightKey.self) { contentHeight = $0 }
                     footer
                 } else {
                     ProgressView().controlSize(.small).tint(MenuPalette.accent)
@@ -686,5 +695,14 @@ extension Color {
             green: Double(n1.greenComponent) * (1 - a) + Double(n2.greenComponent) * a,
             blue: Double(n1.blueComponent) * (1 - a) + Double(n2.blueComponent) * a
         )
+    }
+}
+
+// MARK: - Content height measurement
+
+private struct ContentHeightKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }

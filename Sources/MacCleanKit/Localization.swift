@@ -115,6 +115,7 @@ public enum L10n {
         "重复文件": "Duplicatas",
         "文件粉碎": "Triturador",
         "设置": "Ajustes",
+        "清理历史": "Histórico de Limpezas",
         "清理": "Limpeza",
         "防护": "Proteção",
         "性能": "Desempenho",

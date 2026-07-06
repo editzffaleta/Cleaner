@@ -38,6 +38,7 @@ public enum CleanActions {
         results: [ScanResult],
         selectedItems: Set<URL>,
         engine: CleaningEngine,
+        source: String = CleanHistorySource.manual,
         onProgress: (@Sendable (CleaningEngine.Progress) -> Void)? = nil
     ) async -> CleaningEngine.CleanResult {
         var trashItems: [FileItem] = []
@@ -78,12 +79,14 @@ public enum CleanActions {
         let permanentResult = await engine.clean(items: dedupedPermanentItems, mode: .permanent,
                                                  onProgress: onProgress)
         let thinResult = await thinSelectedBinaries(thinItems)
-        return CleaningEngine.CleanResult(
+        let combined = CleaningEngine.CleanResult(
             removedCount: trashResult.removedCount + permanentResult.removedCount + thinResult.removedCount,
             freedBytes: trashResult.freedBytes + permanentResult.freedBytes + thinResult.freedBytes,
             errors: trashResult.errors + permanentResult.errors + thinResult.errors,
             skippedCount: trashResult.skippedCount + permanentResult.skippedCount + thinResult.skippedCount
         )
+        CleanHistoryStore.record(freedBytes: combined.freedBytes, removedCount: combined.removedCount, source: source)
+        return combined
     }
 
     /// Runs `ThinAppBundleOperation` against each item (item.url = bundle
@@ -136,12 +139,15 @@ public enum CleanActions {
         items: [FileItem],
         selectedItems: Set<URL>,
         engine: CleaningEngine,
+        source: String = CleanHistorySource.manual,
         onProgress: (@Sendable (CleaningEngine.Progress) -> Void)? = nil
     ) async -> CleaningEngine.CleanResult {
         let filtered = items.filter { selectedItems.contains($0.url) }
         let deduped = Self.prunedToParents(filtered)
-        return await engine.clean(items: deduped, mode: .trash,
-                                  onProgress: onProgress)
+        let result = await engine.clean(items: deduped, mode: .trash,
+                                        onProgress: onProgress)
+        CleanHistoryStore.record(freedBytes: result.freedBytes, removedCount: result.removedCount, source: source)
+        return result
     }
 
     /// Returns `items` with any FileItem whose URL is a strict descendant

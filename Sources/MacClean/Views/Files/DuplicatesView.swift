@@ -249,6 +249,7 @@ struct DuplicatesView: View {
                 results: results,
                 selectedItems: selectedItems,
                 engine: appState.cleaningEngine,
+                source: CleanHistorySource.duplicates,
                 onProgress: { progress in
                     Task { @MainActor in cleaning = progress }
                 }

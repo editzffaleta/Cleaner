@@ -202,6 +202,9 @@ public enum MCConstants {
     public static let operationLogDir = userLogs.appending(path: "MacClean")
     public static let operationLogFile = operationLogDir.appending(path: "operations.log")
 
+    /// JSON log of past clean operations, powering the Cleanup History screen.
+    public static let cleanHistoryFile = operationLogDir.appending(path: "clean-history.json")
+
     // MARK: - Project links
 
     public static let repoURL = URL(string: "https://github.com/iliyami/MacSai")!

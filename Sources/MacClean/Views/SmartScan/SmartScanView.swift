@@ -535,6 +535,7 @@ struct SmartScanView: View {
                 results: results,
                 selectedItems: selection,
                 engine: appState.cleaningEngine,
+                source: CleanHistorySource.smartScan,
                 onProgress: { p in Task { @MainActor in
                     // Ignore late progress that lands after we've left the
                     // cleaning phase (cancel/done), so it can't resurrect

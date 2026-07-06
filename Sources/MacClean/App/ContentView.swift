@@ -198,6 +198,8 @@ struct ContentView: View {
             ShredderView()
         case .settings:
             SettingsPageView()
+        case .cleanupHistory:
+            CleanupHistoryView()
         }
     }
 }

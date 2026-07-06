@@ -364,7 +364,8 @@ struct UninstallerView: View {
             _ = await CleanActions.executeUserClean(
                 items: associatedFiles,
                 selectedItems: selectedFiles,
-                engine: appState.cleaningEngine
+                engine: appState.cleaningEngine,
+                source: CleanHistorySource.uninstaller
             )
             await loadApps()
             isUninstalling = false

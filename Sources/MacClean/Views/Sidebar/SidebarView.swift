@@ -30,6 +30,7 @@ public enum SidebarItem: String, CaseIterable, Identifiable {
 
     // Footer (pinned below the list, not rendered in any section)
     case settings = "设置"
+    case cleanupHistory = "清理历史"
 
     public var id: String { rawValue }
     public var title: String { L10n.tr(rawValue) }
@@ -52,6 +53,7 @@ public enum SidebarItem: String, CaseIterable, Identifiable {
         case .duplicates: "duplicates"
         case .shredder: "shredder"
         case .settings: "settings"
+        case .cleanupHistory: "cleanup-history"
         }
     }
 
@@ -77,6 +79,7 @@ public enum SidebarItem: String, CaseIterable, Identifiable {
         case .duplicates: "plus.square.on.square"
         case .shredder: "scissors"
         case .settings: "gearshape"
+        case .cleanupHistory: "clock.arrow.circlepath"
         }
     }
 
@@ -89,6 +92,7 @@ public enum SidebarItem: String, CaseIterable, Identifiable {
         case .uninstaller, .updater: .applications
         case .spaceLens, .largeOldFiles, .duplicates, .shredder: .files
         case .settings: .settings
+        case .cleanupHistory: .settings
         }
     }
 
@@ -101,6 +105,7 @@ public enum SidebarItem: String, CaseIterable, Identifiable {
         case .uninstaller, .updater: .applications
         case .spaceLens, .largeOldFiles, .duplicates, .shredder: .files
         case .settings: .main
+        case .cleanupHistory: .main
         }
     }
 }
@@ -118,7 +123,7 @@ public enum SidebarSection: String, CaseIterable, Identifiable {
 
     public var items: [SidebarItem] {
         // .settings is pinned to the footer; it never renders inside a section.
-        SidebarItem.allCases.filter { $0.section == self && $0 != .settings }
+        SidebarItem.allCases.filter { $0.section == self && $0 != .settings && $0 != .cleanupHistory }
     }
 }
 
@@ -155,9 +160,36 @@ public struct SidebarView: View {
 
             Divider().opacity(0.4)
 
+            historyFooter
             settingsFooter
         }
         .frame(minWidth: 180, idealWidth: 200)
+    }
+
+    /// Pinned footer entry that opens the Cleanup History screen.
+    private var historyFooter: some View {
+        Button {
+            selection = .cleanupHistory
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "clock.arrow.circlepath")
+                    .font(.system(size: 13))
+                    .foregroundStyle(selection == .cleanupHistory ? Color.brand : Color.secondary)
+                Text(L10n.tr("清理历史", "Histórico de Limpezas"))
+                    .font(.system(size: 13, weight: .medium))
+                Spacer()
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(selection == .cleanupHistory ? Color.primary.opacity(0.10) : Color.clear)
+        )
+        .padding(.horizontal, 8)
+        .padding(.top, 6)
     }
 
     /// A collapsible section header: always-visible leading chevron + title;

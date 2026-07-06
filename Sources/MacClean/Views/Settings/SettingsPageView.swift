@@ -21,6 +21,8 @@ struct SettingsPageView: View {
     @AppStorage("removeBackgroundColors") private var removeBackgroundColors = false
     @AppStorage("automaticUpdateChecks") private var automaticUpdateChecks = true
     @AppStorage("lastUpdateCheckDate") private var lastUpdateCheckTimestamp: Double = 0
+    @AppStorage(ScheduledCleanup.enabledKey, store: SharedAppState.defaults) private var scheduledEnabled = false
+    @AppStorage(ScheduledCleanup.frequencyKey, store: SharedAppState.defaults) private var scheduledFrequencyRaw = CleanupFrequency.weekly.rawValue
     @AppStorage(AppearanceManager.defaultsKey) private var appearanceRaw = AppearanceMode.dark.rawValue
     @AppStorage(AppLanguage.defaultsKey, store: SharedAppState.defaults) private var appLanguageRaw = AppLanguage.system.rawValue
     @State private var launcher = MenuBarLauncher.shared
@@ -40,6 +42,7 @@ struct SettingsPageView: View {
         Form {
             headerSection
             generalSection
+            scheduledCleanupSection
             interfaceLanguageSection
             appearanceSection
             languageSection
@@ -59,6 +62,33 @@ struct SettingsPageView: View {
                     selectable = LanguagePreferences.selectableLanguages()
                 }
             }
+        }
+    }
+
+    // MARK: - Scheduled cleanup
+
+    private var scheduledCleanupSection: some View {
+        Section {
+            Toggle(L10n.tr("启用定时清理", "Ativar limpeza automática"), isOn: $scheduledEnabled)
+            if scheduledEnabled {
+                Picker(L10n.tr("频率", "Frequência"), selection: $scheduledFrequencyRaw) {
+                    ForEach(CleanupFrequency.allCases) { freq in
+                        Text(freq.label).tag(freq.rawValue)
+                    }
+                }
+                LabeledContent(L10n.tr("上次运行", "Última execução")) {
+                    if let last = ScheduledCleanup.lastRun {
+                        Text(CleanupHistoryView.relativeDate(last)).foregroundStyle(.secondary)
+                    } else {
+                        Text(L10n.tr("尚未运行", "Ainda não executada")).foregroundStyle(.secondary)
+                    }
+                }
+            }
+        } header: {
+            Text(L10n.tr("定时清理", "Limpeza agendada"))
+        } footer: {
+            Text(L10n.tr("自动清理安全的可再生缓存并移到废纸篓。应用打开时按计划运行。",
+                         "Limpa automaticamente os caches seguros e recriáveis, movendo-os para a Lixeira. É executada no intervalo escolhido enquanto o app está aberto."))
         }
     }
 

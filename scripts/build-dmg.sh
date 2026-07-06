@@ -26,7 +26,7 @@ VERSION="${VERSION:-$(cat VERSION 2>/dev/null | tr -d '[:space:]' || echo '1.0.0
 # them silently bundles stale binaries from the other (a 1.9.0 app shipped in
 # a 1.10.0 wrapper during dev-install testing — binary and Info.plist drift).
 DMG_DIR=".build/dmg"
-DMG_NAME="MacSai-${VERSION}.dmg"
+DMG_NAME="Cleaner-${VERSION}.dmg"
 
 # Detect signing capability
 APP_ONLY=false

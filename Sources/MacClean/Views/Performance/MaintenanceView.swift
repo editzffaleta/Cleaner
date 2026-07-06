@@ -18,10 +18,10 @@ struct MaintenanceView: View {
         VStack(spacing: 0) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(L10n.tr("维护", "Maintenance"))
+                    Text(L10n.tr("维护", "Manutenção"))
                         .font(.system(size: 22, weight: .bold))
                         .foregroundStyle(.primary)
-                    Text(L10n.tr("运行系统维护任务，让 Mac 保持健康", "Run system maintenance tasks to keep your Mac healthy"))
+                    Text(L10n.tr("运行系统维护任务，让 Mac 保持健康", "Execute tarefas de manutenção do sistema para manter seu Mac saudável"))
                         .font(.system(size: 12))
                         .foregroundStyle(.primary.opacity(0.6))
                 }
@@ -30,7 +30,7 @@ struct MaintenanceView: View {
                 // module hides hours-long Spotlight/Launch-Services
                 // disruption behind a single click. Only fire-and-forget
                 // safe tasks now; advanced ones require per-task consent.
-                Button(L10n.tr("运行安全任务", "Run Safe Tasks")) { runSafeTasks() }
+                Button(L10n.tr("运行安全任务", "Executar Tarefas Seguras")) { runSafeTasks() }
                     .buttonStyle(SuperEllipseButtonStyle(
                         gradient: ModuleTheme.performance.buttonGradient,
                         size: CGSize(width: 120, height: 34)
@@ -57,10 +57,10 @@ struct MaintenanceView: View {
             ),
             presenting: taskAwaitingConfirmation
         ) { task in
-            Button(L10n.tr("取消", "Cancel"), role: .cancel) {
+            Button(L10n.tr("取消", "Cancelar"), role: .cancel) {
                 taskAwaitingConfirmation = nil
             }
-            Button(L10n.tr("仍要运行", "Run Anyway"), role: .destructive) {
+            Button(L10n.tr("仍要运行", "Executar Mesmo Assim"), role: .destructive) {
                 let captured = task
                 taskAwaitingConfirmation = nil
                 runTask(captured)
@@ -83,7 +83,7 @@ struct MaintenanceView: View {
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(.primary)
                     if task.severity == .advanced {
-                        Text(L10n.tr("高级", "ADVANCED"))
+                        Text(L10n.tr("高级", "AVANÇADO"))
                             .font(.system(size: 9, weight: .bold))
                             .foregroundStyle(.orange)
                             .padding(.horizontal, 5)
@@ -123,8 +123,8 @@ struct MaintenanceView: View {
             .buttonStyle(.plain)
             .disabled(isRunning(task))
             .help(task.severity == .advanced
-                  ? L10n.tr("可能带来持续数小时的影响——将打开确认窗口", "Has multi-hour side effects — opens a confirmation")
-                  : L10n.tr("运行此任务", "Run this task"))
+                  ? L10n.tr("可能带来持续数小时的影响——将打开确认窗口", "Tem efeitos colaterais que duram horas — abre uma confirmação")
+                  : L10n.tr("运行此任务", "Executar esta tarefa"))
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
@@ -173,7 +173,7 @@ struct MaintenanceView: View {
         if result.success {
             taskStates[task] = .completed(result.output)
         } else {
-            taskStates[task] = .failed(result.error ?? L10n.tr("未知错误", "Unknown error"))
+            taskStates[task] = .failed(result.error ?? L10n.tr("未知错误", "Erro desconhecido"))
         }
     }
 

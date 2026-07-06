@@ -12,7 +12,7 @@ struct FileHandlerView: View {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.secondary)
                     .font(.system(size: 12))
-                TextField(L10n.tr("搜索文件类型或应用...", "Search file type or app..."),
+                TextField(L10n.tr("搜索文件类型或应用...", "Buscar tipo de arquivo ou app..."),
                           text: $viewModel.searchText)
                     .textFieldStyle(.plain)
                     .font(.system(size: 12))
@@ -33,13 +33,13 @@ struct FileHandlerView: View {
                         .font(.system(size: 12))
                 }
                 .buttonStyle(.borderless)
-                .help(L10n.tr("版本历史", "Version history"))
+                .help(L10n.tr("版本历史", "Histórico de versões"))
                 Button(action: { viewModel.loadHandlers() }) {
                     Image(systemName: "arrow.clockwise")
                         .font(.system(size: 12))
                 }
                 .buttonStyle(.borderless)
-                .help(L10n.tr("刷新", "Refresh"))
+                .help(L10n.tr("刷新", "Atualizar"))
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
@@ -58,7 +58,7 @@ struct FileHandlerView: View {
                     Image(systemName: "doc.badge.gearshape")
                         .font(.system(size: 32))
                         .foregroundStyle(.tertiary)
-                    Text(L10n.tr("没有自定义的文件打开方式", "No custom file associations"))
+                    Text(L10n.tr("没有自定义的文件打开方式", "Nenhuma associação de arquivo personalizada"))
                         .font(.system(size: 13))
                         .foregroundStyle(.secondary)
                 }
@@ -69,7 +69,7 @@ struct FileHandlerView: View {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 32))
                         .foregroundStyle(.tertiary)
-                    Text(L10n.tr("没有找到匹配的结果", "No matching results"))
+                    Text(L10n.tr("没有找到匹配的结果", "Nenhum resultado correspondente"))
                         .font(.system(size: 13))
                         .foregroundStyle(.secondary)
                 }
@@ -90,10 +90,10 @@ struct FileHandlerView: View {
         .sheet(isPresented: $viewModel.showRestoreSheet) {
             restoreSheet
         }
-        .alert(L10n.tr("错误", "Error"), isPresented: $viewModel.showError) {
+        .alert(L10n.tr("错误", "Erro"), isPresented: $viewModel.showError) {
             Button("OK") { viewModel.showError = false }
         } message: {
-            Text(viewModel.errorMessage ?? L10n.tr("发生未知错误", "An unknown error occurred"))
+            Text(viewModel.errorMessage ?? L10n.tr("发生未知错误", "Ocorreu um erro desconhecido"))
         }
         .onAppear { viewModel.loadHandlers() }
     }
@@ -103,7 +103,7 @@ struct FileHandlerView: View {
     private var restoreSheet: some View {
         VStack(spacing: 0) {
             HStack {
-                Text(L10n.tr("还原版本", "Restore Version"))
+                Text(L10n.tr("还原版本", "Restaurar Versão"))
                     .font(.headline)
                 Spacer()
                 Button(action: { viewModel.showRestoreSheet = false }) {
@@ -122,7 +122,7 @@ struct FileHandlerView: View {
                     Image(systemName: "clock.badge.questionmark")
                         .font(.system(size: 32))
                         .foregroundStyle(.tertiary)
-                    Text(L10n.tr("没有可用的备份", "No backups available"))
+                    Text(L10n.tr("没有可用的备份", "Nenhum backup disponível"))
                         .font(.system(size: 13))
                         .foregroundStyle(.secondary)
                     Spacer()
@@ -166,7 +166,7 @@ private struct BackupRowView: View {
             }
             Spacer()
             Button(action: onRestore) {
-                Text(L10n.tr("还原", "Restore"))
+                Text(L10n.tr("还原", "Restaurar"))
                     .font(.system(size: 12))
             }
             .buttonStyle(.bordered)
@@ -226,7 +226,7 @@ private struct HandlerRowView: View {
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                 } else if handler.urlScheme != nil {
-                    Text(L10n.tr("URL Scheme", "URL Scheme"))
+                    Text(L10n.tr("Esquema de URL", "URL Scheme"))
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                 }
@@ -247,7 +247,7 @@ private struct HandlerRowView: View {
                     }
                 }
             } else {
-                Text(L10n.tr("未知应用", "Unknown app"))
+                Text(L10n.tr("未知应用", "App desconhecido"))
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
             }
@@ -259,7 +259,7 @@ private struct HandlerRowView: View {
                     .foregroundStyle(.red)
             }
             .buttonStyle(.borderless)
-            .help(L10n.tr("删除此关联（自动备份当前版本）", "Remove (auto-backup created)"))
+            .help(L10n.tr("删除此关联（自动备份当前版本）", "Remover (backup automático criado)"))
         }
         .padding(.vertical, 2)
     }

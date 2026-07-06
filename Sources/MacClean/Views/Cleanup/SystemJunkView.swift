@@ -46,19 +46,19 @@ struct SystemJunkView: View {
             Spacer()
 
             VStack(spacing: 10) {
-                    Text(L10n.tr("系统垃圾", "System Junk"))
+                    Text(L10n.tr("系统垃圾", "Lixo do Sistema"))
                     .font(.system(size: 30, weight: .bold))
                     .foregroundStyle(.primary)
 
-                    Text(L10n.tr("查找并移除系统缓存、日志、\n语言文件和其他垃圾", "Find and remove system caches, logs,\nlanguage files, and other junk"))
+                    Text(L10n.tr("查找并移除系统缓存、日志、\n语言文件和其他垃圾", "Encontre e remova caches do sistema, logs,\narquivos de idioma e outros lixos"))
                     .font(.system(size: 14))
                     .foregroundStyle(.primary.opacity(0.65))
                     .multilineTextAlignment(.center)
             }
 
             ScanButton(
-                title: L10n.tr("扫描", "Scan"),
-                subtitle: L10n.tr("系统垃圾", "System Junk"),
+                title: L10n.tr("扫描", "Escanear"),
+                subtitle: L10n.tr("系统垃圾", "Lixo do Sistema"),
                 theme: .cleanup
             ) {
                 viewModel.startScan()
@@ -75,7 +75,7 @@ struct SystemJunkView: View {
             ScanProgressRing(
                 progress: progress,
                 phase: viewModel.scanPhase,
-                detail: L10n.tr("发现 \(viewModel.filesFound) 个文件", "\(viewModel.filesFound) files found"),
+                detail: L10n.tr("发现 \(viewModel.filesFound) 个文件", "\(viewModel.filesFound) arquivos encontrados"),
                 theme: .cleanup
             )
 
@@ -86,17 +86,17 @@ struct SystemJunkView: View {
     private var resultsView: some View {
         VStack(spacing: 0) {
             HStack {
-                SizeDisplay(size: viewModel.totalSelectedSize, label: L10n.tr("已选择待清理", "selected to clean"))
+                SizeDisplay(size: viewModel.totalSelectedSize, label: L10n.tr("已选择待清理", "selecionados para limpar"))
                     .foregroundStyle(.primary)
 
                 Spacer()
 
                 VStack(alignment: .trailing, spacing: 6) {
-                    Text(L10n.tr("已选择 \(viewModel.selectedCount) / \(viewModel.totalFileCount) 个文件", "\(viewModel.selectedCount) of \(viewModel.totalFileCount) files"))
+                    Text(L10n.tr("已选择 \(viewModel.selectedCount) / \(viewModel.totalFileCount) 个文件", "\(viewModel.selectedCount) de \(viewModel.totalFileCount) arquivos"))
                         .font(.system(size: 12))
                         .foregroundStyle(.primary.opacity(0.6))
 
-                    Button(L10n.tr("清理", "Clean")) {
+                    Button(L10n.tr("清理", "Limpar")) {
                         if viewModel.selectedCount > MCConstants.cleanConfirmationThreshold {
                             showLargeSelectionConfirm = true
                         } else {
@@ -113,18 +113,18 @@ struct SystemJunkView: View {
                     .disabled(viewModel.selectedCount == 0)
                     .opacity(viewModel.selectedCount == 0 ? 0.5 : 1.0)
                     .help(viewModel.selectedCount == 0
-                          ? L10n.tr("请至少勾选一个要清理的项目", "Check at least one item to clean")
-                          : L10n.tr("将 \(viewModel.selectedCount) 项移到废纸篓", "Move \(viewModel.selectedCount) item(s) to Trash"))
+                          ? L10n.tr("请至少勾选一个要清理的项目", "Marque ao menos um item para limpar")
+                          : L10n.tr("将 \(viewModel.selectedCount) 项移到废纸篓", "Mover \(viewModel.selectedCount) item(ns) para a Lixeira"))
                     .alert(
-                        L10n.tr("清理 \(viewModel.selectedCount.formatted()) 项？", "Clean \(viewModel.selectedCount.formatted()) items?"),
+                        L10n.tr("清理 \(viewModel.selectedCount.formatted()) 项？", "Limpar \(viewModel.selectedCount.formatted()) itens?"),
                         isPresented: $showLargeSelectionConfirm
                     ) {
-                        Button(L10n.tr("取消", "Cancel"), role: .cancel) { }
-                        Button(L10n.tr("继续", "Continue"), role: .destructive) {
+                        Button(L10n.tr("取消", "Cancelar"), role: .cancel) { }
+                        Button(L10n.tr("继续", "Continuar"), role: .destructive) {
                             viewModel.startCleaning(engine: appState.cleaningEngine)
                         }
                     } message: {
-                        Text(L10n.tr("约 \(ByteCountFormatter.string(fromByteCount: Int64(viewModel.totalSelectedSize), countStyle: .file)) 数据，可能需要几分钟。清理过程中可以取消。", "That's about \(ByteCountFormatter.string(fromByteCount: Int64(viewModel.totalSelectedSize), countStyle: .file)) of data and may take several minutes. You can cancel mid-cleanup."))
+                        Text(L10n.tr("约 \(ByteCountFormatter.string(fromByteCount: Int64(viewModel.totalSelectedSize), countStyle: .file)) 数据，可能需要几分钟。清理过程中可以取消。", "São cerca de \(ByteCountFormatter.string(fromByteCount: Int64(viewModel.totalSelectedSize), countStyle: .file)) de dados e pode levar vários minutos. Você pode cancelar no meio da limpeza."))
                     }
                 }
             }
@@ -151,13 +151,13 @@ struct SystemJunkView: View {
             Image(systemName: "checkmark.seal.fill")
                 .font(.system(size: 52))
                 .foregroundStyle(.primary.opacity(0.9))
-            Text(L10n.tr("未发现垃圾", "No junk found"))
+            Text(L10n.tr("未发现垃圾", "Nenhum lixo encontrado"))
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundStyle(.primary)
-            Text(L10n.tr("你的 Mac 很干净！", "Your Mac is clean!"))
+            Text(L10n.tr("你的 Mac 很干净！", "Seu Mac está limpo!"))
                 .font(.system(size: 13))
                 .foregroundStyle(.primary.opacity(0.55))
-            Button(L10n.tr("完成", "Done")) { viewModel.reset() }
+            Button(L10n.tr("完成", "Concluído")) { viewModel.reset() }
                 .buttonStyle(.bordered)
                 .tint(.primary)
                 .controlSize(.large)
@@ -178,7 +178,7 @@ struct SystemJunkView: View {
             )
 
             if let progress {
-                Text(L10n.tr("已处理 \(progress.processedItems.formatted()) / \(progress.totalItems.formatted()) 项", "\(progress.processedItems.formatted()) of \(progress.totalItems.formatted()) items"))
+                Text(L10n.tr("已处理 \(progress.processedItems.formatted()) / \(progress.totalItems.formatted()) 项", "\(progress.processedItems.formatted()) de \(progress.totalItems.formatted()) itens"))
                     .font(.system(size: 12, design: .monospaced))
                     .foregroundStyle(.primary.opacity(0.65))
             }
@@ -186,7 +186,7 @@ struct SystemJunkView: View {
             // Cancel button — engine honors Task.isCancelled at chunk
             // boundaries, so a cancel halts the operation and produces a
             // partial CleanResult (which the .done state shows honestly).
-            Button(L10n.tr("取消", "Cancel")) { viewModel.cancelCleaning() }
+            Button(L10n.tr("取消", "Cancelar")) { viewModel.cancelCleaning() }
                 .buttonStyle(.bordered)
                 .tint(.primary)
                 .controlSize(.large)
@@ -224,12 +224,12 @@ struct SystemJunkView: View {
                 }
                 let shownTotal = summary.topErrorGroups.reduce(0) { $0 + $1.count }
                 if summary.errorCount > shownTotal {
-                    Text(L10n.tr("…以及另外 \((summary.errorCount - shownTotal).formatted()) 项", "…and \((summary.errorCount - shownTotal).formatted()) more"))
+                    Text(L10n.tr("…以及另外 \((summary.errorCount - shownTotal).formatted()) 项", "…e mais \((summary.errorCount - shownTotal).formatted())"))
                         .font(.system(size: 11))
                         .foregroundStyle(.primary.opacity(0.5))
                         .padding(.top, 2)
                 }
-                Text(L10n.tr("完整日志：~/Library/Logs/MacClean/operations.log", "Full log: ~/Library/Logs/MacClean/operations.log"))
+                Text(L10n.tr("完整日志：~/Library/Logs/MacClean/operations.log", "Log completo: ~/Library/Logs/MacClean/operations.log"))
                     .font(.system(size: 11, design: .monospaced))
                     .foregroundStyle(.primary.opacity(0.45))
                     .padding(.top, 4)
@@ -245,10 +245,10 @@ struct SystemJunkView: View {
 
     private func cleaningPhaseText(_ progress: CleaningEngine.Progress?) -> String {
         guard let progress, progress.totalItems > 0 else {
-            return L10n.tr("正在开始清理...", "Starting cleanup...")
+            return L10n.tr("正在开始清理...", "Iniciando a limpeza...")
         }
         let pct = Int((progress.fraction * 100).rounded())
-        return L10n.tr("正在清理… \(pct)%", "Cleaning… \(pct)%")
+        return L10n.tr("正在清理… \(pct)%", "Limpando… \(pct)%")
     }
 
     private func doneView(summary: CleanSummary) -> some View {
@@ -265,10 +265,10 @@ struct SystemJunkView: View {
                 Image(systemName: "checklist.unchecked")
                     .font(.system(size: 52))
                     .foregroundStyle(.primary.opacity(0.85))
-                Text(L10n.tr("未选择任何项目", "Nothing was selected"))
+                Text(L10n.tr("未选择任何项目", "Nada foi selecionado"))
                     .font(.system(size: 20, weight: .semibold))
                     .foregroundStyle(.primary)
-                Text(L10n.tr("请重新扫描，勾选要移除的项目，然后点击“清理”。", "Re-run the scan, check the items you want to remove, then click Clean."))
+                Text(L10n.tr("请重新扫描，勾选要移除的项目，然后点击“清理”。", "Refaça o escaneamento, marque os itens que deseja remover e clique em Limpar."))
                     .font(.system(size: 13))
                     .foregroundStyle(.primary.opacity(0.6))
                     .multilineTextAlignment(.center)
@@ -285,11 +285,11 @@ struct SystemJunkView: View {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 52))
                     .foregroundStyle(.primary)
-                SizeDisplay(size: summary.freedBytes, label: L10n.tr("已清理", "cleaned up"))
+                SizeDisplay(size: summary.freedBytes, label: L10n.tr("已清理", "limpo"))
                     .foregroundStyle(.primary)
                 if summary.removedCount < summary.selectedCount {
                     // Partial success — tell them what got skipped.
-                    Text(L10n.tr("已移除 \(summary.removedCount) / \(summary.selectedCount) 项", "\(summary.removedCount) of \(summary.selectedCount) items removed") +
+                    Text(L10n.tr("已移除 \(summary.removedCount) / \(summary.selectedCount) 项", "\(summary.removedCount) de \(summary.selectedCount) itens removidos") +
                          (summary.errorCount > 0 ? L10n.tr(" — \(summary.errorCount) 个错误", " — \(summary.errorCount) error\(summary.errorCount == 1 ? "" : "s")") : ""))
                         .font(.system(size: 12))
                         .foregroundStyle(.primary.opacity(0.65))
@@ -301,14 +301,14 @@ struct SystemJunkView: View {
                     Button {
                         showActivityLog = true
                     } label: {
-                        Label(L10n.tr("查看日志", "View Log"), systemImage: "doc.text.magnifyingglass")
+                        Label(L10n.tr("查看日志", "Ver Registro"), systemImage: "doc.text.magnifyingglass")
                     }
                     .buttonStyle(.bordered)
                     .tint(.primary)
                     .controlSize(.large)
-                    .help(L10n.tr("打开活动日志，查看每个错误并复制详情用于反馈问题", "Open the activity log to see every error and copy details for a bug report"))
+                    .help(L10n.tr("打开活动日志，查看每个错误并复制详情用于反馈问题", "Abra o registro de atividades para ver todos os erros e copiar detalhes para um relato de bug"))
                 }
-                Button(L10n.tr("完成", "Done")) { viewModel.reset() }
+                Button(L10n.tr("完成", "Concluído")) { viewModel.reset() }
                     .buttonStyle(.bordered)
                     .tint(.primary)
                     .controlSize(.large)

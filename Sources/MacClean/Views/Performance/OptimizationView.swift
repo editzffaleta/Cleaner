@@ -17,10 +17,10 @@ struct OptimizationView: View {
         VStack(spacing: 0) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(L10n.tr("优化", "Optimization"))
+                    Text(L10n.tr("优化", "Otimização"))
                         .font(.system(size: 22, weight: .bold))
                         .foregroundStyle(.primary)
-                    Text(L10n.tr("管理启动项和后台进程", "Manage startup items and background processes"))
+                    Text(L10n.tr("管理启动项和后台进程", "Gerencie itens de inicialização e processos em segundo plano"))
                         .font(.system(size: 12))
                         .foregroundStyle(.primary.opacity(0.6))
                 }
@@ -32,18 +32,18 @@ struct OptimizationView: View {
                 Button {
                     refresh()
                 } label: {
-                    Label(L10n.tr("刷新", "Refresh"), systemImage: "arrow.clockwise")
+                    Label(L10n.tr("刷新", "Atualizar"), systemImage: "arrow.clockwise")
                 }
-                .help(L10n.tr("重新扫描启动项", "Rescan startup items"))
+                .help(L10n.tr("重新扫描启动项", "Escanear itens de inicialização de novo"))
             }
             .padding(.horizontal, 24)
             .padding(.vertical, 16)
 
-            Picker(L10n.tr("分区", "Section"), selection: $selectedTab) {
-                Text(L10n.tr("登录项", "Login Items")).tag(0)
+            Picker(L10n.tr("分区", "Seção"), selection: $selectedTab) {
+                Text(L10n.tr("登录项", "Itens de Início")).tag(0)
                 Text(L10n.tr("启动代理", "Launch Agents")).tag(1)
                 Text(L10n.tr("启动守护进程", "Launch Daemons")).tag(2)
-                Text(L10n.tr("文件打开方式", "File Associations")).tag(3)
+                Text(L10n.tr("文件打开方式", "Associações de Arquivos")).tag(3)
             }
             .pickerStyle(.segmented)
             .padding(.horizontal, 24)
@@ -58,7 +58,7 @@ struct OptimizationView: View {
                         ProgressView()
                             .controlSize(.large)
                             .tint(.primary)
-                        Text(L10n.tr("正在加载项目...", "Loading items..."))
+                        Text(L10n.tr("正在加载项目...", "Carregando itens..."))
                             .font(.system(size: 13))
                             .foregroundStyle(.primary.opacity(0.6))
                         Spacer()
@@ -98,7 +98,7 @@ struct OptimizationView: View {
                 Image(systemName: "tray")
                     .font(.system(size: 32))
                     .foregroundStyle(.tertiary)
-                Text(L10n.tr("没有找到项目", "No items found"))
+                Text(L10n.tr("没有找到项目", "Nenhum item encontrado"))
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
                 Spacer()
@@ -178,7 +178,7 @@ private struct ItemRow: View {
                         .clipShape(Capsule())
 
                     if item.isSystem {
-                        Text(L10n.tr("系统", "System"))
+                        Text(L10n.tr("系统", "Sistema"))
                             .font(.system(size: 9, weight: .medium))
                             .padding(.horizontal, 5)
                             .padding(.vertical, 1)
@@ -212,7 +212,7 @@ private struct ItemRow: View {
                         .font(.system(size: 11))
                 }
                 .buttonStyle(.bordered)
-                .help(L10n.tr("在 Finder 中查看配置文件", "Show config in Finder"))
+                .help(L10n.tr("在 Finder 中查看配置文件", "Mostrar configuração no Finder"))
             }
         }
         .frame(maxWidth: .infinity)

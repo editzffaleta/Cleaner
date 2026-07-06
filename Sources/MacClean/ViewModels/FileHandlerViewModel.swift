@@ -52,7 +52,7 @@ public final class FileHandlerViewModel: ObservableObject {
                 loadHandlers()
             } catch {
                 errorMessage = L10n.tr("删除失败：\(error.localizedDescription)",
-                                       "Delete failed: \(error.localizedDescription)")
+                                       "Falha ao excluir: \(error.localizedDescription)")
                 showError = true
             }
         }
@@ -75,7 +75,7 @@ public final class FileHandlerViewModel: ObservableObject {
             } catch {
                 isRestoring = false
                 errorMessage = L10n.tr("还原失败：\(error.localizedDescription)",
-                                       "Restore failed: \(error.localizedDescription)")
+                                       "Falha ao restaurar: \(error.localizedDescription)")
                 showError = true
             }
         }

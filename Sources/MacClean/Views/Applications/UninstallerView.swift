@@ -32,10 +32,10 @@ struct UninstallerView: View {
         VStack(spacing: 0) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(L10n.tr("卸载器", "Uninstaller"))
+                    Text(L10n.tr("卸载器", "Desinstalador"))
                         .font(.system(size: 22, weight: .bold))
                         .foregroundStyle(.primary)
-                    Text(L10n.tr("彻底移除应用及其残留文件", "Completely remove apps and their leftover files"))
+                    Text(L10n.tr("彻底移除应用及其残留文件", "Remova apps e seus arquivos residuais completamente"))
                         .font(.system(size: 12))
                         .foregroundStyle(.primary.opacity(0.6))
                 }
@@ -50,17 +50,17 @@ struct UninstallerView: View {
                     ProgressView()
                         .controlSize(.large)
                         .tint(.primary)
-                    Text(L10n.tr("正在发现已安装应用...", "Discovering installed apps..."))
+                    Text(L10n.tr("正在发现已安装应用...", "Descobrindo apps instalados..."))
                         .font(.system(size: 13))
                         .foregroundStyle(.primary.opacity(0.6))
                 }
                 Spacer()
             } else {
                 HStack(spacing: 10) {
-                    TextField(L10n.tr("搜索应用...", "Search apps..."), text: $searchText)
+                    TextField(L10n.tr("搜索应用...", "Buscar apps..."), text: $searchText)
                         .textFieldStyle(.roundedBorder)
 
-                    Picker(L10n.tr("筛选", "Filter"), selection: $filter) {
+                    Picker(L10n.tr("筛选", "Filtrar"), selection: $filter) {
                         ForEach(AppFilter.allCases, id: \.self) { f in
                             Text(f.label).tag(f)
                         }
@@ -81,7 +81,7 @@ struct UninstallerView: View {
                     } else {
                         VStack {
                             Spacer()
-                            Text(L10n.tr("选择一个应用以查看相关文件", "Select an app to see its files"))
+                            Text(L10n.tr("选择一个应用以查看相关文件", "Selecione um app para ver seus arquivos"))
                                 .foregroundStyle(.primary.opacity(0.4))
                                 .font(.system(size: 13))
                             Spacer()
@@ -106,12 +106,12 @@ struct UninstallerView: View {
                isPresented: Binding(get: { appPendingUninstall != nil },
                                     set: { if !$0 { appPendingUninstall = nil } }),
                presenting: appPendingUninstall) { app in
-            Button(L10n.tr("取消", "Cancel"), role: .cancel) { appPendingUninstall = nil }
-            Button(L10n.tr("移到废纸篓", "Move to Trash"), role: .destructive) {
+            Button(L10n.tr("取消", "Cancelar"), role: .cancel) { appPendingUninstall = nil }
+            Button(L10n.tr("移到废纸篓", "Mover para a Lixeira"), role: .destructive) {
                 let target = app; appPendingUninstall = nil; uninstall(target)
             }
         } message: { app in
-            Text(L10n.tr("\(app.name) 及其关联文件将被移到废纸篓。如有需要，你可以从废纸篓恢复。", "\(app.name) and its associated files will be moved to the Trash. You can restore them from the Trash if needed."))
+            Text(L10n.tr("\(app.name) 及其关联文件将被移到废纸篓。如有需要，你可以从废纸篓恢复。", "O \(app.name) e seus arquivos associados serão movidos para a Lixeira. Você pode restaurá-los da Lixeira se precisar."))
         }
     }
 
@@ -154,7 +154,7 @@ struct UninstallerView: View {
                         Spacer()
 
                         if app.isUnused {
-                            Text(L10n.tr("未使用", "Unused"))
+                            Text(L10n.tr("未使用", "Não usado"))
                                 .font(.system(size: 10))
                                 .padding(.horizontal, 5)
                                 .padding(.vertical, 1)
@@ -189,7 +189,7 @@ struct UninstallerView: View {
                 Spacer()
 
                 if safetyGuard.isProtectedApp(app.bundleIdentifier) {
-                    Text(L10n.tr("受保护的系统应用——无法移除", "Protected system app — can't be removed"))
+                    Text(L10n.tr("受保护的系统应用——无法移除", "App de sistema protegido — não pode ser removido"))
                         .font(.system(size: 12))
                         .foregroundStyle(.primary.opacity(0.6))
                 } else if isUninstalling {
@@ -197,16 +197,16 @@ struct UninstallerView: View {
                     // re-tapped) and a spinner shows the work is happening.
                     ProgressView()
                         .controlSize(.small)
-                    Text(L10n.tr("正在卸载…", "Uninstalling…"))
+                    Text(L10n.tr("正在卸载…", "Desinstalando…"))
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                 } else {
-                    Button(L10n.tr("卸载", "Uninstall")) { appPendingUninstall = app }
+                    Button(L10n.tr("卸载", "Desinstalar")) { appPendingUninstall = app }
                         .buttonStyle(.borderedProminent)
                         .tint(.red)
                         .controlSize(.small)
 
-                    Button(L10n.tr("重置", "Reset")) { resetSelection() }
+                    Button(L10n.tr("重置", "Redefinir")) { resetSelection() }
                         .buttonStyle(.bordered)
                         .controlSize(.small)
                 }
@@ -215,13 +215,13 @@ struct UninstallerView: View {
 
             if isLoadingFiles {
                 Spacer()
-                ProgressView(L10n.tr("正在查找关联文件...", "Finding associated files..."))
+                ProgressView(L10n.tr("正在查找关联文件...", "Procurando arquivos associados..."))
                     .tint(.secondary)
                     .font(.system(size: 12))
                 Spacer()
             } else if !associatedFiles.isEmpty {
                 let totalSize = associatedFiles.reduce(0 as UInt64) { $0 + $1.size }
-                Text(L10n.tr("\(associatedFiles.count) 个关联文件（\(FileSizeFormatter.format(totalSize))）", "\(associatedFiles.count) associated files (\(FileSizeFormatter.format(totalSize)))"))
+                Text(L10n.tr("\(associatedFiles.count) 个关联文件（\(FileSizeFormatter.format(totalSize))）", "\(associatedFiles.count) arquivos associados (\(FileSizeFormatter.format(totalSize)))"))
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -260,7 +260,7 @@ struct UninstallerView: View {
                 .listStyle(.inset)
             } else {
                 Spacer()
-                Text(L10n.tr("未找到关联文件", "No associated files found"))
+                Text(L10n.tr("未找到关联文件", "Nenhum arquivo associado encontrado"))
                     .foregroundStyle(.secondary)
                     .font(.system(size: 12))
                 Spacer()

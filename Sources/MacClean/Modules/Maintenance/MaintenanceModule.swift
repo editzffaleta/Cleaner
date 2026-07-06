@@ -3,7 +3,7 @@ import MacCleanKit
 
 public struct MaintenanceModule: ScanModule {
     public let id = "maintenance"
-    public var name: String { L10n.tr("维护", "Maintenance") }
+    public var name: String { L10n.tr("维护", "Manutenção") }
     public let category = ModuleCategory.performance
 
     public init() {}
@@ -32,7 +32,7 @@ public actor MaintenanceExecutor {
 
         guard let (command, args) = task.systemCommand else {
             return TaskResult(task: task, success: false, output: "",
-                              error: L10n.tr("该任务没有可执行的系统命令", "Task has no system command"))
+                              error: L10n.tr("该任务没有可执行的系统命令", "A tarefa não tem comando de sistema"))
         }
 
         if task.requiresAdmin {
@@ -63,7 +63,7 @@ public actor MaintenanceExecutor {
         if !result.success, let err = result.error {
             if err.contains("User canceled") || err.contains("-128") {
                 return TaskResult(task: task, success: false, output: "",
-                                  error: L10n.tr("已取消——未授予管理员权限。", "Cancelled — administrator access was not granted."))
+                                  error: L10n.tr("已取消——未授予管理员权限。", "Cancelado — o acesso de administrador não foi concedido."))
             }
             // Otherwise strip osascript's "1:92: execution error: … (1)" wrapper
             // so the user sees the real underlying message (issue #82).
@@ -119,7 +119,7 @@ public actor MaintenanceExecutor {
                 return TaskResult(
                     task: .speedUpMail,
                     success: true,
-                    output: L10n.tr("邮件索引已移除。邮件将在下次启动时重建。", "Mail envelope index removed. Mail will rebuild it on next launch."),
+                    output: L10n.tr("邮件索引已移除。邮件将在下次启动时重建。", "Índice de envelopes do Mail removido. O Mail vai recriá-lo na próxima abertura."),
                     error: nil
                 )
             } catch {
@@ -135,7 +135,7 @@ public actor MaintenanceExecutor {
         return TaskResult(
             task: .speedUpMail,
             success: true,
-            output: L10n.tr("未找到邮件索引——邮件可能使用了不同的版本目录。", "Mail envelope index not found — Mail may use a different version directory."),
+            output: L10n.tr("未找到邮件索引——邮件可能使用了不同的版本目录。", "Índice de envelopes do Mail não encontrado — o Mail pode usar um diretório de versão diferente."),
             error: nil
         )
     }
@@ -151,7 +151,7 @@ public actor MaintenanceExecutor {
             return TaskResult(
                 task: .pruneDocker, success: false, output: "",
                 error: L10n.tr("未找到 Docker 命令行工具。请确认已安装 Docker Desktop。",
-                               "Docker CLI not found. Make sure Docker Desktop is installed."))
+                               "CLI do Docker não encontrada. Verifique se o Docker Desktop está instalado."))
         }
         return await runProcess(task: .pruneDocker, command: docker, args: ["system", "prune", "-f"])
     }

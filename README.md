@@ -10,7 +10,13 @@
 </p>
 
 <p align="center">
-  <strong>English</strong> | <a href="README.zh-CN.md">简体中文</a>
+  <strong>English</strong> | <a href="README.zh-CN.md">简体中文</a> | <strong>Português (Brasil)</strong>
+</p>
+
+<p align="center">
+  <sub>🇧🇷 <strong>Versão traduzida para Português (Brasil).</strong> Este é um fork da tradução do projeto original
+  <a href="https://github.com/iliyami/MacSai">iliyami/MacSai</a> (licença BSD 3-Clause). Toda a interface do app
+  foi traduzida para pt-BR; o idioma pode ser trocado em <em>Ajustes → Idioma da Interface</em>.</sub>
 </p>
 
 <!-- TEMPORARY rename notice: remove once the new name has settled (target: 2026-09). -->

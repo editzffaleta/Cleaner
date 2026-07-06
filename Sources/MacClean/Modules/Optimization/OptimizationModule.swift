@@ -4,7 +4,7 @@ import MacCleanKit
 
 public struct OptimizationModule: ScanModule {
     public let id = "optimization"
-    public var name: String { L10n.tr("优化", "Optimization") }
+    public var name: String { L10n.tr("优化", "Otimização") }
     public let category = ModuleCategory.performance
 
     public init() {}
@@ -33,7 +33,7 @@ public struct AutoStartItem: Identifiable, Sendable {
 
         public var localizedName: String {
             switch self {
-            case .loginItem:    return L10n.tr("登录项", "Login Item")
+            case .loginItem:    return L10n.tr("登录项", "Item de Início")
             case .launchAgent:  return L10n.tr("启动代理", "Launch Agent")
             case .launchDaemon: return L10n.tr("启动守护进程", "Launch Daemon")
             }

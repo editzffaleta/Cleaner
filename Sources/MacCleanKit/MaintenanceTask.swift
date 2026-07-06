@@ -55,25 +55,25 @@ public enum MaintenanceTask: String, CaseIterable, Identifiable, Sendable {
     public var description: String {
         switch self {
         case .freeUpRAM:
-            L10n.tr("清理非活动内存，为当前应用释放更多空间", "Purge inactive memory to give active apps more breathing room")
+            L10n.tr("清理非活动内存，为当前应用释放更多空间", "Libere a memória inativa para dar mais folga aos apps ativos")
         case .freeUpPurgeableSpace:
-            L10n.tr("通过精简低优先级本地快照回收可清除磁盘空间", "Reclaim purgeable disk space by thinning low-priority local snapshots")
+            L10n.tr("通过精简低优先级本地快照回收可清除磁盘空间", "Recupere espaço purgável em disco reduzindo snapshots locais de baixa prioridade")
         case .runMaintenanceScripts:
-            L10n.tr("执行 macOS 内置的每日、每周和每月维护任务", "Execute macOS built-in daily, weekly, and monthly maintenance routines")
+            L10n.tr("执行 macOS 内置的每日、每周和每月维护任务", "Executar as rotinas de manutenção diárias, semanais e mensais internas do macOS")
         case .verifyStartupDisk:
-            L10n.tr("检查启动磁盘的文件系统完整性", "Check file system integrity of the boot disk")
+            L10n.tr("检查启动磁盘的文件系统完整性", "Verificar a integridade do sistema de arquivos do disco de inicialização")
         case .speedUpMail:
-            L10n.tr("重建“邮件”数据库索引，以修复搜索和性能问题", "Reindex the Mail.app database to fix search and performance issues")
+            L10n.tr("重建“邮件”数据库索引，以修复搜索和性能问题", "Reindexe o banco de dados do Mail.app para corrigir problemas de busca e desempenho")
         case .rebuildLaunchServices:
-            L10n.tr("修复 Finder 的文件类型与应用打开方式数据库", "Repair Finder's file-type-to-application mapping database")
+            L10n.tr("修复 Finder 的文件类型与应用打开方式数据库", "Repare o banco de dados de mapeamento tipo-de-arquivo/aplicativo do Finder")
         case .reindexSpotlight:
-            L10n.tr("重建 Spotlight 搜索索引，提高搜索准确性", "Rebuild the Spotlight search index for improved search accuracy")
+            L10n.tr("重建 Spotlight 搜索索引，提高搜索准确性", "Reconstruir o índice de busca do Spotlight para melhorar a precisão da busca")
         case .flushDNSCache:
-            L10n.tr("清除本地 DNS 缓存并强制重新解析", "Clear the local DNS cache and force fresh lookups")
+            L10n.tr("清除本地 DNS 缓存并强制重新解析", "Limpar o cache DNS local e forçar novas consultas")
         case .thinTimeMachineSnapshots:
-            L10n.tr("缩减本地 Time Machine 快照以回收磁盘空间", "Reduce local Time Machine snapshot sizes to reclaim disk space")
+            L10n.tr("缩减本地 Time Machine 快照以回收磁盘空间", "Reduza o tamanho dos snapshots locais do Time Machine para recuperar espaço em disco")
         case .pruneDocker:
-            L10n.tr("清理未使用的 Docker 镜像、已停止的容器和构建缓存", "Remove unused Docker images, stopped containers, and build cache")
+            L10n.tr("清理未使用的 Docker 镜像、已停止的容器和构建缓存", "Remova imagens do Docker não usadas, containers parados e cache de build")
         }
     }
 
@@ -115,25 +115,25 @@ public enum MaintenanceTask: String, CaseIterable, Identifiable, Sendable {
     public var sideEffects: String {
         switch self {
         case .freeUpRAM:
-            L10n.tr("曾被换出的应用回到前台时可能需要片刻恢复。", "Apps that had memory paged out may take a moment to come back to foreground.")
+            L10n.tr("曾被换出的应用回到前台时可能需要片刻恢复。", "Apps que tiveram memória descarregada podem levar um instante para voltar ao primeiro plano.")
         case .freeUpPurgeableSpace:
-            L10n.tr("仅移除 macOS 已标记可清理的 Time Machine 本地快照；不会删除你主动需要的内容。", "Time Machine local snapshots that macOS already flagged for cleanup are removed; nothing the user actively needs is deleted.")
+            L10n.tr("仅移除 macOS 已标记可清理的 Time Machine 本地快照；不会删除你主动需要的内容。", "Os snapshots locais do Time Machine que o macOS já marcou para limpeza são removidos; nada que o usuário realmente precise é excluído.")
         case .runMaintenanceScripts:
-            L10n.tr("通常没有可见影响——这些脚本与 macOS 夜间自动运行的维护脚本相同。", "No visible effect — these are the same scripts macOS runs on its own overnight.")
+            L10n.tr("通常没有可见影响——这些脚本与 macOS 夜间自动运行的维护脚本相同。", "Sem efeito visível — são os mesmos scripts que o macOS executa sozinho durante a noite.")
         case .verifyStartupDisk:
-            L10n.tr("会产生几分钟磁盘活动。该操作为只读，无论结果如何都不会更改磁盘内容。", "A few minutes of disk activity. Read-only — nothing on disk is changed regardless of the outcome.")
+            L10n.tr("会产生几分钟磁盘活动。该操作为只读，无论结果如何都不会更改磁盘内容。", "Alguns minutos de atividade de disco. Somente leitura — nada no disco é alterado, seja qual for o resultado.")
         case .speedUpMail:
-            L10n.tr("“邮件”应用的搜索索引会从头重建。重建完成前，邮件搜索和未读数可能不准确（大型邮箱通常需 10–30 分钟）。", "Mail.app's search index is rebuilt from scratch. Mail search and unread counts will be wrong until the rebuild finishes (typically 10–30 minutes on a large mailbox).")
+            L10n.tr("“邮件”应用的搜索索引会从头重建。重建完成前，邮件搜索和未读数可能不准确（大型邮箱通常需 10–30 分钟）。", "O índice de busca do Mail.app é reconstruído do zero. A busca do Mail e a contagem de não lidos ficarão incorretas até a reconstrução terminar (normalmente de 10 a 30 minutos em uma caixa de correio grande).")
         case .rebuildLaunchServices:
-            L10n.tr("macOS 的“哪类文件由哪个应用打开”数据库会被清除并重建。完成前（通常数小时），双击文件可能失败或打开错误应用，默认应用设置可能重置，Spotlight 启动应用也可能不可用。重启可加快恢复。", "macOS's database of \"which app opens which file type\" is erased and rebuilt. Until it finishes (often several hours), double-clicking files may fail or open the wrong app, default-app settings may reset, and launching apps via Spotlight may not work. A reboot speeds this up.")
+            L10n.tr("macOS 的“哪类文件由哪个应用打开”数据库会被清除并重建。完成前（通常数小时），双击文件可能失败或打开错误应用，默认应用设置可能重置，Spotlight 启动应用也可能不可用。重启可加快恢复。", "O banco de dados do macOS de \"qual app abre qual tipo de arquivo\" é apagado e reconstruído. Até terminar (muitas vezes várias horas), dar dois cliques em arquivos pode falhar ou abrir o app errado, os ajustes de app padrão podem ser redefinidos e abrir apps pelo Spotlight pode não funcionar. Reiniciar acelera isso.")
         case .reindexSpotlight:
-            L10n.tr("Spotlight 的整个搜索索引会被清除并重建。数小时内 Spotlight 搜索可能返回空结果（主目录越大耗时越久），系统搜索和智能文件夹也会受影响。", "Spotlight's entire search index is erased and rebuilt. Spotlight search will return empty results for several hours (longer for large home directories). System search and Smart Folders are affected too.")
+            L10n.tr("Spotlight 的整个搜索索引会被清除并重建。数小时内 Spotlight 搜索可能返回空结果（主目录越大耗时越久），系统搜索和智能文件夹也会受影响。", "Todo o índice de busca do Spotlight é apagado e reconstruído. A busca do Spotlight retornará resultados vazios por várias horas (mais tempo em pastas pessoais grandes). A busca do sistema e as Pastas Inteligentes também são afetadas.")
         case .flushDNSCache:
-            L10n.tr("浏览器和其他网络应用会在下次请求时重新解析主机名，影响通常只有毫秒级。", "Browsers and other network apps re-resolve hostnames on next request — milliseconds of impact.")
+            L10n.tr("浏览器和其他网络应用会在下次请求时重新解析主机名，影响通常只有毫秒级。", "Navegadores e outros apps de rede resolvem os nomes de host novamente na próxima requisição — impacto de milissegundos.")
         case .thinTimeMachineSnapshots:
-            L10n.tr("会删除本地 Time Machine 快照以释放空间。远程或备份盘上的快照不受影响，你仍可从 Time Machine 备份恢复。", "Local Time Machine snapshots are deleted to free disk space. Remote/backup-drive snapshots are unaffected; you can still restore from the Time Machine backup itself.")
+            L10n.tr("会删除本地 Time Machine 快照以释放空间。远程或备份盘上的快照不受影响，你仍可从 Time Machine 备份恢复。", "Os snapshots locais do Time Machine são excluídos para liberar espaço em disco. Os snapshots remotos/em disco de backup não são afetados; você ainda pode restaurar a partir do próprio backup do Time Machine.")
         case .pruneDocker:
-            L10n.tr("运行 docker system prune，删除未使用的镜像、已停止的容器、未使用的网络和构建缓存。此操作不可撤销（不会进入废纸篓）。正在运行的容器、使用中的镜像和命名卷不受影响，磁盘映像 Docker.raw 也不会被直接删除。", "Runs docker system prune, removing unused images, stopped containers, unused networks, and build cache. This is irreversible (it does not go to the Trash). Running containers, in-use images, and named volumes are untouched, and the Docker.raw disk image is never deleted directly.")
+            L10n.tr("运行 docker system prune，删除未使用的镜像、已停止的容器、未使用的网络和构建缓存。此操作不可撤销（不会进入废纸篓）。正在运行的容器、使用中的镜像和命名卷不受影响，磁盘映像 Docker.raw 也不会被直接删除。", "Executa docker system prune, removendo imagens não usadas, containers parados, redes não usadas e cache de build. Isso é irreversível (não vai para a Lixeira). Containers em execução, imagens em uso e volumes nomeados não são tocados, e a imagem de disco Docker.raw nunca é excluída diretamente.")
         }
     }
 

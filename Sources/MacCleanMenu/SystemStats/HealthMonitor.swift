@@ -44,8 +44,8 @@ public actor HealthMonitor {
         if SharedAppState.recentlyNotified(kind: "disk_low", throttle: 15 * 60) { return }
         await fire(
             kind: "disk_low",
-            title: L10n.tr("存储空间严重不足", "Storage critical"),
-            body: L10n.tr("启动磁盘仅剩 \(FileSizeFormatter.format(stats.diskFree)) 可用。打开 \(MCConstants.appName) 释放空间。", "Only \(FileSizeFormatter.format(stats.diskFree)) free on your startup disk. Open \(MCConstants.appName) to free up space.")
+            title: L10n.tr("存储空间严重不足", "Armazenamento crítico"),
+            body: L10n.tr("启动磁盘仅剩 \(FileSizeFormatter.format(stats.diskFree)) 可用。打开 \(MCConstants.appName) 释放空间。", "Apenas \(FileSizeFormatter.format(stats.diskFree)) livres no seu disco de inicialização. Abra o \(MCConstants.appName) para liberar espaço.")
         )
     }
 
@@ -63,8 +63,8 @@ public actor HealthMonitor {
         memoryPressureSampleStreak = 0
         await fire(
             kind: "memory_high",
-            title: L10n.tr("内存压力过高", "Memory pressure high"),
-            body: L10n.tr("内存压力持续达到 \(Int(stats.memoryPressure * 100))%。\(MCConstants.appName) 的“维护”模块可释放内存。", "Sustained \(Int(stats.memoryPressure * 100))% memory pressure. \(MCConstants.appName)'s Maintenance module can free up RAM.")
+            title: L10n.tr("内存压力过高", "Pressão de memória alta"),
+            body: L10n.tr("内存压力持续达到 \(Int(stats.memoryPressure * 100))%。\(MCConstants.appName) 的“维护”模块可释放内存。", "Pressão de memória sustentada em \(Int(stats.memoryPressure * 100))%. O módulo de Manutenção do \(MCConstants.appName) pode liberar RAM.")
         )
     }
 
@@ -75,8 +75,8 @@ public actor HealthMonitor {
         if SharedAppState.recentlyNotified(kind: "battery_health", throttle: 7 * 24 * 3600) { return }
         await fire(
             kind: "battery_health",
-            title: L10n.tr("电池健康低于 \(Int(thresholds.batteryHealthFloor * 100))%", "Battery health below \(Int(thresholds.batteryHealthFloor * 100))%"),
-            body: L10n.tr("你的电池最大容量当前为 \(Int(health * 100))%。建议预约检修。", "Your battery's maximum capacity is now \(Int(health * 100))%. Consider scheduling a service appointment.")
+            title: L10n.tr("电池健康低于 \(Int(thresholds.batteryHealthFloor * 100))%", "Saúde da bateria abaixo de \(Int(thresholds.batteryHealthFloor * 100))%"),
+            body: L10n.tr("你的电池最大容量当前为 \(Int(health * 100))%。建议预约检修。", "A capacidade máxima da sua bateria agora é \(Int(health * 100))%. Considere agendar um atendimento técnico.")
         )
     }
 
@@ -85,8 +85,8 @@ public actor HealthMonitor {
         if SharedAppState.recentlyNotified(kind: "battery_cycles", throttle: 7 * 24 * 3600) { return }
         await fire(
             kind: "battery_cycles",
-            title: L10n.tr("电池循环次数较高", "Battery cycle count high"),
-            body: L10n.tr("你的电池已完成 \(cycles) 次循环。Apple 通常认为多数电池在约 1000 次循环后会出现明显损耗。", "Your battery has been through \(cycles) cycles. Apple rates most batteries for ~1000 before noticeable wear.")
+            title: L10n.tr("电池循环次数较高", "Contagem de ciclos da bateria alta"),
+            body: L10n.tr("你的电池已完成 \(cycles) 次循环。Apple 通常认为多数电池在约 1000 次循环后会出现明显损耗。", "Sua bateria passou por \(cycles) ciclos. A Apple estima que a maioria das baterias dura cerca de 1000 ciclos antes de um desgaste perceptível.")
         )
     }
 

@@ -18,17 +18,17 @@ public struct SafetyGuard: Sendable {
         public var errorDescription: String? {
             switch self {
             case .protectedPath(let path):
-                L10n.tr("无法修改受保护的系统路径：\(path)", "Cannot modify protected system path: \(path)")
+                L10n.tr("无法修改受保护的系统路径：\(path)", "Não é possível modificar o caminho protegido do sistema: \(path)")
             case .tooManyFiles(let count):
-                L10n.tr("操作超过 \(MCConstants.maxFilesPerOperation) 个文件的安全限制（尝试处理：\(count) 个）", "Operation exceeds safety limit of \(MCConstants.maxFilesPerOperation) files (attempted: \(count))")
+                L10n.tr("操作超过 \(MCConstants.maxFilesPerOperation) 个文件的安全限制（尝试处理：\(count) 个）", "A operação excede o limite de segurança de \(MCConstants.maxFilesPerOperation) arquivos (tentados: \(count))")
             case .symlinkTarget(let path):
-                L10n.tr("路径通过符号链接指向了意外位置：\(path)", "Path resolves through symlink to unexpected location: \(path)")
+                L10n.tr("路径通过符号链接指向了意外位置：\(path)", "O caminho resolve através de um link simbólico para um local inesperado: \(path)")
             case .sipProtected(let path):
-                L10n.tr("路径受系统完整性保护（SIP）保护：\(path)", "Path is protected by System Integrity Protection: \(path)")
+                L10n.tr("路径受系统完整性保护（SIP）保护：\(path)", "O caminho é protegido pela Proteção de Integridade do Sistema: \(path)")
             case .outsideUserScope(let path):
-                L10n.tr("路径不在允许的用户范围内：\(path)", "Path is outside the allowed user scope: \(path)")
+                L10n.tr("路径不在允许的用户范围内：\(path)", "O caminho está fora do escopo permitido do usuário: \(path)")
             case .invalidPath(let path):
-                L10n.tr("路径无效或包含非法字符：\(path)", "Path is invalid or contains illegal characters: \(path)")
+                L10n.tr("路径无效或包含非法字符：\(path)", "O caminho é inválido ou contém caracteres ilegais: \(path)")
             }
         }
     }

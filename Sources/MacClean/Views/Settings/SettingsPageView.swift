@@ -70,7 +70,7 @@ struct SettingsPageView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(MCConstants.appName)
                         .font(.title2.weight(.semibold))
-                    Text(L10n.tr("版本 \(MCConstants.appVersion)", "Version \(MCConstants.appVersion)"))
+                    Text(L10n.tr("版本 \(MCConstants.appVersion)", "Versão \(MCConstants.appVersion)"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -80,12 +80,12 @@ struct SettingsPageView: View {
             if case .available(let version, let url) = updateState {
                 updateAvailableRow(version: version, url: url)
             }
-            Toggle(L10n.tr("自动检查更新", "Automatically check for updates"),
+            Toggle(L10n.tr("自动检查更新", "Verificar atualizações automaticamente"),
                    isOn: $automaticUpdateChecks)
             if lastUpdateCheckTimestamp > 0 {
                 Text(L10n.tr(
                     "上次检查：\(lastCheckedDescription)",
-                    "Last checked: \(lastCheckedDescription)"))
+                    "Última verificação: \(lastCheckedDescription)"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -101,16 +101,16 @@ struct SettingsPageView: View {
     private var updateControl: some View {
         switch updateState {
         case .idle:
-            Button(L10n.tr("检查更新", "Check for Updates")) { startUpdateCheck() }
+            Button(L10n.tr("检查更新", "Verificar Atualizações")) { startUpdateCheck() }
         case .checking:
             HStack(spacing: 6) {
                 ProgressView().controlSize(.small)
-                Text(L10n.tr("正在检查…", "Checking…")).foregroundStyle(.secondary)
+                Text(L10n.tr("正在检查…", "Verificando…")).foregroundStyle(.secondary)
             }
         case .upToDate:
             HStack(spacing: 4) {
                 Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
-                Text(L10n.tr("已是最新", "Up to date"))
+                Text(L10n.tr("已是最新", "Atualizado"))
             }
         case .available:
             EmptyView()   // detail rendered by updateAvailableRow
@@ -118,7 +118,7 @@ struct SettingsPageView: View {
             HStack(spacing: 6) {
                 Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
                 Text(message).font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                Button(L10n.tr("重试", "Retry")) { startUpdateCheck() }
+                Button(L10n.tr("重试", "Tentar de novo")) { startUpdateCheck() }
             }
         }
     }
@@ -128,7 +128,7 @@ struct SettingsPageView: View {
         if UpdateChecker.isHomebrewInstall() {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(L10n.tr("发现版本 \(version)。请使用 Homebrew 更新：", "Version \(version) is available. Update with Homebrew:"))
+                    Text(L10n.tr("发现版本 \(version)。请使用 Homebrew 更新：", "A versão \(version) está disponível. Atualize com o Homebrew:"))
                     Text(Self.brewUpgradeCommand)
                         .font(.system(.body, design: .monospaced))
                         .textSelection(.enabled)
@@ -138,14 +138,14 @@ struct SettingsPageView: View {
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(Self.brewUpgradeCommand, forType: .string)
                 } label: {
-                    Label(L10n.tr("复制", "Copy"), systemImage: "doc.on.doc")
+                    Label(L10n.tr("复制", "Copiar"), systemImage: "doc.on.doc")
                 }
             }
         } else {
             HStack {
-                Text(L10n.tr("发现版本 \(version)。", "Version \(version) is available."))
+                Text(L10n.tr("发现版本 \(version)。", "A versão \(version) está disponível."))
                 Spacer()
-                Button(L10n.tr("查看发布页", "View Release")) { NSWorkspace.shared.open(url) }
+                Button(L10n.tr("查看发布页", "Ver Versão")) { NSWorkspace.shared.open(url) }
                     .buttonStyle(.borderedProminent)
             }
         }
@@ -172,13 +172,13 @@ struct SettingsPageView: View {
     // MARK: - General
 
     private var generalSection: some View {
-        Section(L10n.tr("通用", "General")) {
+        Section(L10n.tr("通用", "Geral")) {
             // Toggle flips instantly; the SMAppService round-trip runs in the
             // background with a spinner (no main-thread block, no lag).
             HStack(spacing: 10) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(L10n.tr("登录时启动", "Launch at login"))
-                    Text(L10n.tr("登录 macOS 时自动打开 \(MCConstants.appName)。你也可以在“系统设置 → 通用 → 登录项”中管理。", "Open \(MCConstants.appName) automatically when you sign in to macOS. You can also manage this in System Settings → General → Login Items."))
+                    Text(L10n.tr("登录时启动", "Abrir no login"))
+                    Text(L10n.tr("登录 macOS 时自动打开 \(MCConstants.appName)。你也可以在“系统设置 → 通用 → 登录项”中管理。", "Abrir o \(MCConstants.appName) automaticamente quando você entrar no macOS. Você também pode gerenciar isso em Ajustes do Sistema → Geral → Itens de Início."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -186,7 +186,7 @@ struct SettingsPageView: View {
                 if loginLauncher.isBusy {
                     ProgressView().controlSize(.small)
                 }
-                Toggle(L10n.tr("登录时启动", "Launch at login"), isOn: $launchAtLogin)
+                Toggle(L10n.tr("登录时启动", "Abrir no login"), isOn: $launchAtLogin)
                     .toggleStyle(.switch)
                     .labelsHidden()
                     .disabled(loginLauncher.isBusy)
@@ -196,7 +196,7 @@ struct SettingsPageView: View {
                 Task { await loginLauncher.setEnabled(newValue) }
             }
             if loginLauncher.status == .requiresApproval {
-                Label(L10n.tr("需要在“系统设置 → 通用 → 登录项”中批准", "Needs approval in System Settings → General → Login Items"),
+                Label(L10n.tr("需要在“系统设置 → 通用 → 登录项”中批准", "Precisa de aprovação em Ajustes do Sistema → Geral → Itens de Início"),
                       systemImage: "exclamationmark.triangle.fill")
                     .foregroundStyle(.orange)
                     .font(.caption)
@@ -209,8 +209,8 @@ struct SettingsPageView: View {
 
             HStack(spacing: 10) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(L10n.tr("在菜单栏显示 \(MCConstants.appName)", "Show \(MCConstants.appName) in the menu bar"))
-                    Text(L10n.tr("在屏幕顶部实时显示 CPU、内存、磁盘、电池和网络状态。点击可展开浮窗。", "Live CPU, memory, disk, battery, and network at the top of your screen. Click to expand the popover."))
+                    Text(L10n.tr("在菜单栏显示 \(MCConstants.appName)", "Mostrar o \(MCConstants.appName) na barra de menus"))
+                    Text(L10n.tr("在屏幕顶部实时显示 CPU、内存、磁盘、电池和网络状态。点击可展开浮窗。", "CPU, memória, disco, bateria e rede ao vivo no topo da tela. Clique para expandir o popover."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -218,7 +218,7 @@ struct SettingsPageView: View {
                 if launcher.isBusy {
                     ProgressView().controlSize(.small)
                 }
-                Toggle(L10n.tr("在菜单栏显示 \(MCConstants.appName)", "Show \(MCConstants.appName) in the menu bar"), isOn: $showMenuBarWidget)
+                Toggle(L10n.tr("在菜单栏显示 \(MCConstants.appName)", "Mostrar o \(MCConstants.appName) na barra de menus"), isOn: $showMenuBarWidget)
                     .toggleStyle(.switch)
                     .labelsHidden()
                     .disabled(launcher.isBusy)
@@ -239,8 +239,8 @@ struct SettingsPageView: View {
     // MARK: - Interface Language
 
     private var interfaceLanguageSection: some View {
-        Section(L10n.tr("界面语言", "Interface Language")) {
-            Picker(L10n.tr("语言", "Language"), selection: $appLanguageRaw) {
+        Section(L10n.tr("界面语言", "Idioma da Interface")) {
+            Picker(L10n.tr("语言", "Idioma"), selection: $appLanguageRaw) {
                 ForEach(AppLanguage.allCases) { language in
                     Text(language.pickerLabel).tag(language.rawValue)
                 }
@@ -251,7 +251,7 @@ struct SettingsPageView: View {
                 selectable = LanguagePreferences.selectableLanguages()
             }
 
-            Text(L10n.tr("切换后会立即应用到主界面和菜单栏小组件。", "Changes apply immediately to the main window and menu-bar widget."))
+            Text(L10n.tr("切换后会立即应用到主界面和菜单栏小组件。", "As alterações se aplicam imediatamente à janela principal e ao widget da barra de menus."))
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -260,8 +260,8 @@ struct SettingsPageView: View {
     // MARK: - Appearance
 
     private var appearanceSection: some View {
-        Section(L10n.tr("外观", "Appearance")) {
-            Picker(L10n.tr("主题", "Theme"), selection: $appearanceRaw) {
+        Section(L10n.tr("外观", "Aparência")) {
+            Picker(L10n.tr("主题", "Tema"), selection: $appearanceRaw) {
                 ForEach(AppearanceMode.allCases) { mode in
                     Text(mode.label).tag(mode.rawValue)
                 }
@@ -273,13 +273,13 @@ struct SettingsPageView: View {
 
             HStack(spacing: 10) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(L10n.tr("移除背景颜色", "Remove background colors"))
-                    Text(L10n.tr("将模块渐变背景替换为中性的深色背景，以提升可读性。", "Replace module gradient backgrounds with a neutral dark color for better readability."))
+                    Text(L10n.tr("移除背景颜色", "Remover cores de fundo"))
+                    Text(L10n.tr("将模块渐变背景替换为中性的深色背景，以提升可读性。", "Substituir os fundos em gradiente dos módulos por uma cor escura neutra para melhor legibilidade."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                Toggle(L10n.tr("移除背景颜色", "Remove background colors"), isOn: $removeBackgroundColors)
+                Toggle(L10n.tr("移除背景颜色", "Remover cores de fundo"), isOn: $removeBackgroundColors)
                     .toggleStyle(.switch)
                     .labelsHidden()
             }
@@ -289,21 +289,21 @@ struct SettingsPageView: View {
     // MARK: - Language Cleanup (carried over from the old Settings window)
 
     private var languageSection: some View {
-        Section(L10n.tr("语言清理", "Language Cleanup")) {
-            Text(L10n.tr("英文、基础资源和中文会始终保留。已勾选的语言会保留；未勾选的语言文件可由“系统垃圾”移除。", "English, Base resources, and Chinese are always kept. Checked languages are preserved; unchecked language files can be removed by System Junk."))
+        Section(L10n.tr("语言清理", "Limpeza de Idiomas")) {
+            Text(L10n.tr("英文、基础资源和中文会始终保留。已勾选的语言会保留；未勾选的语言文件可由“系统垃圾”移除。", "Inglês, recursos Base e chinês são sempre mantidos. Os idiomas marcados são preservados; os arquivos de idioma desmarcados podem ser removidos pelo Lixo do Sistema."))
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
             if selectable.isEmpty {
-                Text(L10n.tr("正在检测已安装语言…", "Detecting installed languages…"))
+                Text(L10n.tr("正在检测已安装语言…", "Detectando idiomas instalados…"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
-                TextField(L10n.tr("搜索语言", "Search languages"), text: $languageSearch)
+                TextField(L10n.tr("搜索语言", "Buscar idiomas"), text: $languageSearch)
                     .textFieldStyle(.roundedBorder)
 
                 if filteredLanguages.isEmpty {
-                    Text(L10n.tr("没有语言匹配“\(languageSearch)”。", "No languages match “\(languageSearch)”."))
+                    Text(L10n.tr("没有语言匹配“\(languageSearch)”。", "Nenhum idioma corresponde a “\(languageSearch)”."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -343,15 +343,15 @@ struct SettingsPageView: View {
     // MARK: - About
 
     private var aboutSection: some View {
-        Section(L10n.tr("关于", "About")) {
+        Section(L10n.tr("关于", "Sobre")) {
             aboutRow(icon: "chevron.left.forwardslash.chevron.right", tint: .orange,
-                     title: L10n.tr("源代码", "Source code"), caption: L10n.tr("在 GitHub 上浏览代码库", "Browse the codebase on GitHub"),
+                     title: L10n.tr("源代码", "Código-fonte"), caption: L10n.tr("在 GitHub 上浏览代码库", "Explore o código no GitHub"),
                      url: MCConstants.repoURL)
             aboutRow(icon: "exclamationmark.bubble", tint: .blue,
-                     title: L10n.tr("报告问题", "Report an issue"), caption: L10n.tr("提交错误报告和功能请求", "Bug reports and feature requests"),
+                     title: L10n.tr("报告问题", "Relatar um problema"), caption: L10n.tr("提交错误报告和功能请求", "Relatos de bugs e pedidos de recursos"),
                      url: MCConstants.issuesURL)
             aboutRow(icon: "tag", tint: .green,
-                     title: L10n.tr("发行说明", "Release notes"), caption: L10n.tr("更新日志和历史版本", "Changelog and previous versions"),
+                     title: L10n.tr("发行说明", "Notas da versão"), caption: L10n.tr("更新日志和历史版本", "Histórico de alterações e versões anteriores"),
                      url: MCConstants.releasesURL)
         }
     }
@@ -389,7 +389,7 @@ struct SettingsPageView: View {
         HStack {
             Image(systemName: statusGlyph)
                 .foregroundStyle(statusColor)
-            Text(L10n.tr("组件状态：", "Widget status:"))
+            Text(L10n.tr("组件状态：", "Status do widget:"))
                 .foregroundStyle(.secondary)
             Text(statusText)
                 .font(.system(.body, design: .monospaced))
@@ -419,9 +419,9 @@ struct SettingsPageView: View {
     private var statusText: String {
         switch launcher.statusSnapshot {
         case .enabled: return L10n.tr("运行中")
-        case .notRegistered: return L10n.tr("未注册", "not registered")
-        case .notFound: return L10n.tr("未在应用包中找到辅助组件", "helper not found in bundle")
-        case .requiresApproval: return L10n.tr("需要在“系统设置 → 登录项”中批准", "needs approval in System Settings → Login Items")
+        case .notRegistered: return L10n.tr("未注册", "não registrado")
+        case .notFound: return L10n.tr("未在应用包中找到辅助组件", "helper não encontrado no bundle")
+        case .requiresApproval: return L10n.tr("需要在“系统设置 → 登录项”中批准", "precisa de aprovação em Ajustes do Sistema → Itens de Início")
         @unknown default: return L10n.tr("未知")
         }
     }

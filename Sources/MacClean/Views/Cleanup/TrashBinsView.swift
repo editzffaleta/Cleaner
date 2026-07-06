@@ -16,10 +16,10 @@ struct TrashBinsView: View {
 
     var body: some View {
         ModuleContainerView(
-            title: L10n.tr("废纸篓", "Trash Bins"),
-            subtitle: L10n.tr("清空所有废纸篓位置，包括外接驱动器", "Empty all trash locations including external drives"),
+            title: L10n.tr("废纸篓", "Lixeiras"),
+            subtitle: L10n.tr("清空所有废纸篓位置，包括外接驱动器", "Esvaziar todas as lixeiras, inclusive as de discos externos"),
             theme: .cleanup,
-            emptyMessage: L10n.tr("废纸篓为空", "Trash is empty"),
+            emptyMessage: L10n.tr("废纸篓为空", "A Lixeira está vazia"),
             results: results,
             selectedItems: $selectedItems,
             isScanning: isScanning,
@@ -64,11 +64,11 @@ struct TrashBinsView: View {
         Task {
             let scanStart = Date()
 
-            scanPhase = L10n.tr("正在扫描用户废纸篓...", "Scanning user Trash...")
+            scanPhase = L10n.tr("正在扫描用户废纸篓...", "Escaneando a Lixeira do usuário...")
             scanProgress = 0.3
             try? await Task.sleep(for: .milliseconds(400))
 
-            scanPhase = L10n.tr("正在检查外接驱动器...", "Checking external drives...")
+            scanPhase = L10n.tr("正在检查外接驱动器...", "Verificando discos externos...")
             scanProgress = 0.6
 
             async let scanTask = module.scanReportingPermissions()
@@ -76,7 +76,7 @@ struct TrashBinsView: View {
             results = outcome.results
             permissionDenied = outcome.permissionDenied
 
-            scanPhase = L10n.tr("正在计算大小...", "Calculating sizes...")
+            scanPhase = L10n.tr("正在计算大小...", "Calculando tamanhos...")
             scanProgress = 0.9
 
             let elapsed = Date().timeIntervalSince(scanStart)

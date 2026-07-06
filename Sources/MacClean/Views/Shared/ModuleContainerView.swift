@@ -51,12 +51,12 @@ struct ModuleContainerView: View {
         title: String,
         subtitle: String,
         theme: ModuleTheme,
-        emptyMessage: String = L10n.tr("未找到项目", "No items found"),
+        emptyMessage: String = L10n.tr("未找到项目", "Nenhum item encontrado"),
         results: [ScanResult],
         selectedItems: Binding<Set<URL>>,
         isScanning: Bool,
         scanProgress: Double = 0.5,
-        scanPhase: String = L10n.tr("正在扫描...", "Scanning..."),
+        scanPhase: String = L10n.tr("正在扫描...", "Escaneando..."),
         scanComplete: Bool = false,
         completion: CleanSummary? = nil,
         cleaning: CleaningEngine.Progress? = nil,
@@ -164,12 +164,12 @@ struct ModuleContainerView: View {
                 }
                 if summary.errorCount > summary.topErrorGroups.reduce(0, { $0 + $1.count }) {
                     let shownTotal = summary.topErrorGroups.reduce(0) { $0 + $1.count }
-                    Text(L10n.tr("…以及另外 \((summary.errorCount - shownTotal).formatted()) 项", "…and \((summary.errorCount - shownTotal).formatted()) more"))
+                    Text(L10n.tr("…以及另外 \((summary.errorCount - shownTotal).formatted()) 项", "…e mais \((summary.errorCount - shownTotal).formatted())"))
                         .font(.system(size: 11))
                         .foregroundStyle(.primary.opacity(0.5))
                         .padding(.top, 2)
                 }
-                Text(L10n.tr("完整日志：~/Library/Logs/MacClean/operations.log", "Full log: ~/Library/Logs/MacClean/operations.log"))
+                Text(L10n.tr("完整日志：~/Library/Logs/MacClean/operations.log", "Log completo: ~/Library/Logs/MacClean/operations.log"))
                     .font(.system(size: 11, design: .monospaced))
                     .foregroundStyle(.primary.opacity(0.45))
                     .padding(.top, 4)
@@ -189,17 +189,17 @@ struct ModuleContainerView: View {
             ScanProgressRing(
                 progress: progress.fraction,
                 phase: progress.totalItems > 0
-                    ? L10n.tr("正在清理… \(Int((progress.fraction * 100).rounded()))%", "Cleaning… \(Int((progress.fraction * 100).rounded()))%")
-                    : L10n.tr("正在开始清理...", "Starting cleanup..."),
+                    ? L10n.tr("正在清理… \(Int((progress.fraction * 100).rounded()))%", "Limpando… \(Int((progress.fraction * 100).rounded()))%")
+                    : L10n.tr("正在开始清理...", "Iniciando a limpeza..."),
                 theme: theme
             )
             if progress.totalItems > 0 {
-                Text(L10n.tr("已处理 \(progress.processedItems.formatted()) / \(progress.totalItems.formatted()) 项", "\(progress.processedItems.formatted()) of \(progress.totalItems.formatted()) items"))
+                Text(L10n.tr("已处理 \(progress.processedItems.formatted()) / \(progress.totalItems.formatted()) 项", "\(progress.processedItems.formatted()) de \(progress.totalItems.formatted()) itens"))
                     .font(.system(size: 12, design: .monospaced))
                     .foregroundStyle(.primary.opacity(0.65))
             }
             if let onCancelClean {
-                Button(L10n.tr("取消", "Cancel")) { onCancelClean() }
+                Button(L10n.tr("取消", "Cancelar")) { onCancelClean() }
                     .buttonStyle(.bordered)
                     .tint(.primary)
                     .controlSize(.large)
@@ -221,7 +221,7 @@ struct ModuleContainerView: View {
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: 380)
             }
-            ScanButton(title: L10n.tr("扫描", "Scan"), subtitle: title, theme: theme, action: onScan)
+            ScanButton(title: L10n.tr("扫描", "Escanear"), subtitle: title, theme: theme, action: onScan)
             Spacer()
         }
     }
@@ -243,10 +243,10 @@ struct ModuleContainerView: View {
             Text(emptyMessage)
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundStyle(.primary)
-            Text(L10n.tr("扫描完成——没有需要清理的内容", "Scan complete — nothing to clean up"))
+            Text(L10n.tr("扫描完成——没有需要清理的内容", "Escaneamento concluído — nada para limpar"))
                 .font(.system(size: 13))
                 .foregroundStyle(.primary.opacity(0.55))
-            Button(L10n.tr("完成", "Done")) { onReset() }
+            Button(L10n.tr("完成", "Concluído")) { onReset() }
                 .buttonStyle(.bordered)
                 .tint(.primary)
                 .controlSize(.large)
@@ -263,26 +263,26 @@ struct ModuleContainerView: View {
             Image(systemName: "lock.fill")
                 .font(.system(size: 52))
                 .foregroundStyle(.primary.opacity(0.9))
-            Text(L10n.tr("需要完全磁盘访问权限", "Full Disk Access needed"))
+            Text(L10n.tr("需要完全磁盘访问权限", "É necessário Acesso Total ao Disco"))
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundStyle(.primary)
-            Text(L10n.tr("macOS 正在阻止访问此位置。请为 \(MCConstants.appName) 授予完全磁盘访问权限，然后重新扫描。", "macOS is blocking access to this location. Grant \(MCConstants.appName) Full Disk Access, then scan again."))
+            Text(L10n.tr("macOS 正在阻止访问此位置。请为 \(MCConstants.appName) 授予完全磁盘访问权限，然后重新扫描。", "O macOS está bloqueando o acesso a este local. Conceda Acesso Total ao Disco ao \(MCConstants.appName) e escaneie de novo."))
                 .font(.system(size: 13))
                 .foregroundStyle(.primary.opacity(0.7))
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 360)
             HStack(spacing: 10) {
                 if let onGrantAccess {
-                    Button(L10n.tr("打开设置", "Open Settings")) { onGrantAccess() }
+                    Button(L10n.tr("打开设置", "Abrir Ajustes")) { onGrantAccess() }
                         .buttonStyle(.borderedProminent)
                         .tint(.primary)
                         .controlSize(.large)
                 }
-                Button(L10n.tr("重新扫描", "Rescan")) { onScan() }
+                Button(L10n.tr("重新扫描", "Escanear de novo")) { onScan() }
                     .buttonStyle(.bordered)
                     .tint(.primary)
                     .controlSize(.large)
-                Button(L10n.tr("完成", "Done")) { onReset() }
+                Button(L10n.tr("完成", "Concluído")) { onReset() }
                     .buttonStyle(.bordered)
                     .tint(.primary)
                     .controlSize(.large)
@@ -297,7 +297,7 @@ struct ModuleContainerView: View {
                 SizeDisplay(size: totalSelected, label: L10n.tr("已选择"))
                     .foregroundStyle(.primary)
                 Spacer()
-                Button(L10n.tr("清理", "Clean")) {
+                Button(L10n.tr("清理", "Limpar")) {
                     if confirmEmptyTrash {
                         // Trash Bins: permanent + irreversible — always confirm.
                         showEmptyTrashConfirm = true
@@ -317,28 +317,28 @@ struct ModuleContainerView: View {
                     .disabled(selectedCount == 0)
                     .opacity(selectedCount == 0 ? 0.5 : 1.0)
                     .help(selectedCount == 0
-                          ? L10n.tr("请至少勾选一个要清理的项目", "Check at least one item to clean")
+                          ? L10n.tr("请至少勾选一个要清理的项目", "Marque ao menos um item para limpar")
                           : confirmEmptyTrash
-                            ? L10n.tr("从废纸篓中永久删除 \(selectedCount) 项", "Permanently delete \(selectedCount) item(s) from the Trash")
-                            : L10n.tr("将 \(selectedCount) 项移到废纸篓", "Move \(selectedCount) item(s) to Trash"))
+                            ? L10n.tr("从废纸篓中永久删除 \(selectedCount) 项", "Excluir permanentemente \(selectedCount) item(ns) da Lixeira")
+                            : L10n.tr("将 \(selectedCount) 项移到废纸篓", "Mover \(selectedCount) item(ns) para a Lixeira"))
                     .alert(
-                        L10n.tr("清理 \(selectedCount.formatted()) 项？", "Clean \(selectedCount.formatted()) items?"),
+                        L10n.tr("清理 \(selectedCount.formatted()) 项？", "Limpar \(selectedCount.formatted()) itens?"),
                         isPresented: $showLargeSelectionConfirm
                     ) {
-                        Button(L10n.tr("取消", "Cancel"), role: .cancel) { }
-                        Button(L10n.tr("继续", "Continue"), role: .destructive) { onClean() }
+                        Button(L10n.tr("取消", "Cancelar"), role: .cancel) { }
+                        Button(L10n.tr("继续", "Continuar"), role: .destructive) { onClean() }
                     } message: {
-                        Text(L10n.tr("约 \(formattedSelectedSize) 数据，可能需要几分钟。清理过程中可以取消。", "That's about \(formattedSelectedSize) of data and may take several minutes. You can cancel mid-cleanup."))
+                        Text(L10n.tr("约 \(formattedSelectedSize) 数据，可能需要几分钟。清理过程中可以取消。", "São cerca de \(formattedSelectedSize) de dados e pode levar vários minutos. Você pode cancelar no meio da limpeza."))
                     }
                     // Trash Bins empties ~/.Trash permanently — there is no
                     // recovery, so this confirmation fires on every Empty
                     // regardless of how many items are selected.
                     .alert(
-                        L10n.tr("清空废纸篓？", "Empty the Trash?"),
+                        L10n.tr("清空废纸篓？", "Esvaziar a Lixeira?"),
                         isPresented: $showEmptyTrashConfirm
                     ) {
-                        Button(L10n.tr("取消", "Cancel"), role: .cancel) { }
-                        Button(L10n.tr("清空废纸篓", "Empty Trash"), role: .destructive) { onClean() }
+                        Button(L10n.tr("取消", "Cancelar"), role: .cancel) { }
+                        Button(L10n.tr("清空废纸篓", "Esvaziar Lixeira"), role: .destructive) { onClean() }
                     } message: {
                         Text(L10n.tr("这会永久删除 \(selectedCount.formatted()) 项（\(formattedSelectedSize)），且无法撤销。", "This permanently deletes \(selectedCount.formatted()) item\(selectedCount == 1 ? "" : "s") (\(formattedSelectedSize)) and cannot be undone."))
                     }
@@ -375,10 +375,10 @@ struct ModuleContainerView: View {
                 Image(systemName: "checklist.unchecked")
                     .font(.system(size: 52))
                     .foregroundStyle(.primary.opacity(0.85))
-                Text(L10n.tr("未选择任何项目", "Nothing was selected"))
+                Text(L10n.tr("未选择任何项目", "Nada foi selecionado"))
                     .font(.system(size: 20, weight: .semibold))
                     .foregroundStyle(.primary)
-                Text(L10n.tr("请重新扫描，勾选要移除的项目，然后点击“清理”。", "Re-run the scan, check the items you want to remove, then click Clean."))
+                Text(L10n.tr("请重新扫描，勾选要移除的项目，然后点击“清理”。", "Refaça o escaneamento, marque os itens que deseja remover e clique em Limpar."))
                     .font(.system(size: 13))
                     .foregroundStyle(.primary.opacity(0.6))
                     .multilineTextAlignment(.center)
@@ -400,10 +400,10 @@ struct ModuleContainerView: View {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 52))
                     .foregroundStyle(.primary)
-                SizeDisplay(size: summary.freedBytes, label: L10n.tr("已清理", "cleaned up"))
+                SizeDisplay(size: summary.freedBytes, label: L10n.tr("已清理", "limpo"))
                     .foregroundStyle(.primary)
                 if summary.removedCount < summary.selectedCount {
-                    Text(L10n.tr("已移除 \(summary.removedCount) / \(summary.selectedCount) 项", "\(summary.removedCount) of \(summary.selectedCount) items removed") +
+                    Text(L10n.tr("已移除 \(summary.removedCount) / \(summary.selectedCount) 项", "\(summary.removedCount) de \(summary.selectedCount) itens removidos") +
                          (summary.errorCount > 0 ? L10n.tr(" — \(summary.errorCount) 个错误", " — \(summary.errorCount) error\(summary.errorCount == 1 ? "" : "s")") : ""))
                         .font(.system(size: 12))
                         .foregroundStyle(.primary.opacity(0.65))
@@ -415,14 +415,14 @@ struct ModuleContainerView: View {
                     Button {
                         showActivityLog = true
                     } label: {
-                        Label(L10n.tr("查看日志", "View Log"), systemImage: "doc.text.magnifyingglass")
+                        Label(L10n.tr("查看日志", "Ver Registro"), systemImage: "doc.text.magnifyingglass")
                     }
                     .buttonStyle(.bordered)
                     .tint(.primary)
                     .controlSize(.large)
-                    .help(L10n.tr("打开活动日志，查看每个错误并复制详情用于反馈问题", "Open the activity log to see every error and copy details for a bug report"))
+                    .help(L10n.tr("打开活动日志，查看每个错误并复制详情用于反馈问题", "Abra o registro de atividades para ver todos os erros e copiar detalhes para um relato de bug"))
                 }
-                Button(L10n.tr("完成", "Done")) { onReset() }
+                Button(L10n.tr("完成", "Concluído")) { onReset() }
                     .buttonStyle(.bordered)
                     .tint(.primary)
                     .controlSize(.large)

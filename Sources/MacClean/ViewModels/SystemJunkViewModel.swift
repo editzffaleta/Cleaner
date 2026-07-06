@@ -20,7 +20,7 @@ final class SystemJunkViewModel {
         didSet { recomputeSelectedSize() }
     }
     var filesFound: Int = 0
-    var scanPhase: String = L10n.tr("正在扫描...", "Scanning...")
+    var scanPhase: String = L10n.tr("正在扫描...", "Escaneando...")
     /// Held so the View's Cancel button can stop an in-flight cleanup.
     private var cleanTask: Task<Void, Never>?
 
@@ -68,35 +68,35 @@ final class SystemJunkViewModel {
         filesFound = 0
         results = []
         selectedItems = []
-        scanPhase = L10n.tr("正在扫描缓存...", "Scanning caches...")
+        scanPhase = L10n.tr("正在扫描缓存...", "Escaneando caches...")
 
         Task {
             let scanStart = Date()
 
             state = .scanning(progress: 0.1)
-            scanPhase = L10n.tr("正在扫描用户缓存...", "Scanning user caches...")
+            scanPhase = L10n.tr("正在扫描用户缓存...", "Escaneando caches do usuário...")
             try? await Task.sleep(for: .milliseconds(300))
 
-            scanPhase = L10n.tr("正在扫描系统日志...", "Scanning system logs...")
+            scanPhase = L10n.tr("正在扫描系统日志...", "Escaneando logs do sistema...")
             state = .scanning(progress: 0.25)
 
             async let scanTask = module.scan()
 
             try? await Task.sleep(for: .milliseconds(400))
-            scanPhase = L10n.tr("正在检查语言文件...", "Checking language files...")
+            scanPhase = L10n.tr("正在检查语言文件...", "Verificando arquivos de idioma...")
             state = .scanning(progress: 0.4)
 
             try? await Task.sleep(for: .milliseconds(300))
-            scanPhase = L10n.tr("正在检查偏好设置...", "Inspecting preferences...")
+            scanPhase = L10n.tr("正在检查偏好设置...", "Inspecionando preferências...")
             state = .scanning(progress: 0.55)
 
             try? await Task.sleep(for: .milliseconds(300))
-            scanPhase = L10n.tr("正在检查登录项...", "Checking login items...")
+            scanPhase = L10n.tr("正在检查登录项...", "Verificando itens de início...")
             state = .scanning(progress: 0.7)
 
             let scanResults = await scanTask
 
-            scanPhase = L10n.tr("正在分析结果...", "Analyzing results...")
+            scanPhase = L10n.tr("正在分析结果...", "Analisando resultados...")
             state = .scanning(progress: 0.9)
 
             results = scanResults

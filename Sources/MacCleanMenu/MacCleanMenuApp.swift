@@ -39,7 +39,7 @@ struct MacCleanMenuApp: App {
     /// normal (non-template) image so it shows the brand colors instead of
     /// being flattened to a monochrome mask.
     private static let labelIcon: NSImage = {
-        let img = VacuumAsset.image.copy() as! NSImage
+        let img = CleanerLogo.image.copy() as! NSImage
         img.isTemplate = false
         img.size = NSSize(width: 18, height: 18)
         return img
@@ -172,21 +172,10 @@ struct MenuContentView: View {
 
     private var header: some View {
         HStack(spacing: 12) {
-            RoundedRectangle(cornerRadius: 13, style: .continuous)
-                .fill(LinearGradient(
-                    colors: [MenuPalette.accent.opacity(0.65).blend(withWhite: 0.5), MenuPalette.accent],
-                    startPoint: .topLeading, endPoint: .bottomTrailing))
+            Image(nsImage: CleanerLogo.image)
+                .resizable().interpolation(.high)
                 .frame(width: 44, height: 44)
-                .overlay {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 21, weight: .semibold))
-                        .foregroundStyle(.white)
-                }
-                .overlay {
-                    RoundedRectangle(cornerRadius: 13, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.35), lineWidth: 0.5)
-                }
-                .shadow(color: MenuPalette.accent.opacity(0.5), radius: 8, y: 4)
+                .shadow(color: MenuPalette.accent.opacity(0.45), radius: 8, y: 4)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(MCConstants.appName)

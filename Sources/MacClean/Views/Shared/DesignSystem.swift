@@ -20,7 +20,7 @@ extension SidebarItem {
     var dsAccent: Color {
         switch self {
         case .home, .smartScan, .settings, .cleanupHistory: Theme.accent
-        case .systemJunk, .mailAttachments: Color(red: 0.45, green: 0.85, blue: 0.60)
+        case .systemJunk, .mailAttachments, .systemData: Color(red: 0.45, green: 0.85, blue: 0.60)
         case .trashBins: Color(white: 0.75)
         case .malwareRemoval: Color(red: 0.96, green: 0.48, blue: 0.48)
         case .privacy: Color(red: 0.98, green: 0.62, blue: 0.35)
@@ -36,7 +36,7 @@ extension SidebarItem {
         switch self {
         case .home, .settings, .cleanupHistory: Theme.bgTop
         case .smartScan: Theme.scanTop
-        case .systemJunk: Color(red: 0.06, green: 0.22, blue: 0.14)
+        case .systemJunk, .systemData: Color(red: 0.06, green: 0.22, blue: 0.14)
         case .mailAttachments: Color(red: 0.05, green: 0.20, blue: 0.20)
         case .trashBins: Color(red: 0.13, green: 0.14, blue: 0.16)
         case .malwareRemoval: Color(red: 0.26, green: 0.09, blue: 0.10)
@@ -56,7 +56,7 @@ extension SidebarItem {
     var dsIconColor: Color {
         switch self {
         case .home, .smartScan: Theme.accent
-        case .systemJunk: .green
+        case .systemJunk, .systemData: .green
         case .mailAttachments: .mint
         case .trashBins: .gray
         case .malwareRemoval: .red

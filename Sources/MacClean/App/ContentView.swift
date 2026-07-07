@@ -172,6 +172,8 @@ struct ContentView: View {
         switch item {
         case .home:
             HomeDashboardView()
+        case .systemData:
+            DSSystemDataScreen()
         case .smartScan, .systemJunk, .mailAttachments, .trashBins,
              .malwareRemoval, .privacy, .largeOldFiles, .duplicates, .shredder:
             DSModuleScreen(module: item)

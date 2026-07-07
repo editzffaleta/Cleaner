@@ -15,6 +15,7 @@ extension SidebarItem {
         case .home, .settings, .cleanupHistory: return ""
         case .smartScan: return "Escaneie seu Mac em busca de arquivos de lixo,\nameaças de malware e problemas de desempenho."
         case .systemJunk: return "Encontre e remova caches do sistema, logs,\narquivos de idioma e outros lixos"
+        case .systemData: return "Recupere o espaço da categoria \"Dados do Sistema\":\ncaches, backups iOS e snapshots do Time Machine"
         case .mailAttachments: return "Localize e remova anexos e downloads do Mail"
         case .trashBins: return "Esvazie todas as lixeiras do seu Mac de uma vez"
         case .malwareRemoval: return "Verifique seu Mac em busca de malware, adware e spyware"

@@ -103,6 +103,7 @@ public enum L10n {
         "首页": "Início",
         "智能扫描": "Escaneamento Inteligente",
         "系统垃圾": "Lixo do Sistema",
+        "系统数据": "Dados do Sistema",
         "邮件附件": "Anexos do Mail",
         "废纸篓": "Lixeiras",
         "恶意软件清理": "Remoção de Malware",

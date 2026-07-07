@@ -8,6 +8,7 @@ public enum SidebarItem: String, CaseIterable, Identifiable {
 
     // Cleanup
     case systemJunk = "系统垃圾"
+    case systemData = "系统数据"
     case mailAttachments = "邮件附件"
     case trashBins = "废纸篓"
 
@@ -42,6 +43,7 @@ public enum SidebarItem: String, CaseIterable, Identifiable {
         case .home: "home"
         case .smartScan: "smart-scan"
         case .systemJunk: "system-junk"
+        case .systemData: "system-data"
         case .mailAttachments: "mail-attachments"
         case .trashBins: "trash-bins"
         case .malwareRemoval: "malware"
@@ -69,6 +71,7 @@ public enum SidebarItem: String, CaseIterable, Identifiable {
         case .home: "house"
         case .smartScan: "magnifyingglass"
         case .systemJunk: "trash.circle"
+        case .systemData: "macpro.gen3"
         case .mailAttachments: "paperclip"
         case .trashBins: "trash"
         case .malwareRemoval: "shield.lefthalf.filled"
@@ -90,7 +93,7 @@ public enum SidebarItem: String, CaseIterable, Identifiable {
         switch self {
         case .home: .smartScan
         case .smartScan: .smartScan
-        case .systemJunk, .mailAttachments, .trashBins: .cleanup
+        case .systemJunk, .systemData, .mailAttachments, .trashBins: .cleanup
         case .malwareRemoval, .privacy: .protection
         case .optimization, .maintenance: .performance
         case .uninstaller, .updater: .applications
@@ -104,7 +107,7 @@ public enum SidebarItem: String, CaseIterable, Identifiable {
         switch self {
         case .home: .main
         case .smartScan: .main
-        case .systemJunk, .mailAttachments, .trashBins: .cleanup
+        case .systemJunk, .systemData, .mailAttachments, .trashBins: .cleanup
         case .malwareRemoval, .privacy: .protection
         case .optimization, .maintenance: .performance
         case .uninstaller, .updater: .applications

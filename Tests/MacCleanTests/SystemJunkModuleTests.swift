@@ -18,7 +18,9 @@ final class SystemJunkModuleTests: XCTestCase {
     func testModuleMetadata() {
         let m = SystemJunkModule()
         XCTAssertEqual(m.id, "system_junk")
-        XCTAssertEqual(m.name, "System Junk")
+        // `name` is localized display text (PT/ZH) — the stable contract is the
+        // id/category, so just assert the name is present, not a fixed string.
+        XCTAssertFalse(m.name.isEmpty)
         XCTAssertEqual(m.category, .cleanup)
         XCTAssertTrue(m.includedInSmartScan)
     }

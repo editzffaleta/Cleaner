@@ -629,139 +629,439 @@ struct DSUpdaterScreen: View {
     }
 }
 
-// MARK: - Lente de Espaço (tamanhos REAIS, sem prompts de permissão)
+// MARK: - Lente de Espaço (analisador REAL de "Dados do Sistema" / dados de apps)
+//
+// O balde "Dados do Sistema" do macOS é dominado por dados REAIS dos apps —
+// mídia do WhatsApp, perfis de navegador, imagens de VM, Docker — que ficam em
+// ~/Library/{Application Support, Group Containers, Containers}. Um cleaner de
+// lixo NÃO deve apagar isso sozinho (você perderia dados). Esta tela mede essas
+// pastas com `du` (tamanho exato em disco), ranqueia da maior para a menor e
+// deixa VOCÊ decidir — revelando cada uma no Finder. É o "onde meu espaço foi".
+
+/// Uma pasta de dados encontrada pelo analisador.
+struct SpaceEntry: Identifiable {
+    let id = UUID()
+    let name: String       // nome amigável do app (ex.: "WhatsApp")
+    let url: URL           // caminho real da pasta
+    let bytes: UInt64
+    let kind: String       // rótulo: "Dados de App", "Contêiner", "Cache"…
+    let icon: String
+    let hint: String?      // dica de como reduzir com segurança, quando conhecida
+    var protected = false  // container bloqueado por TCC — precisa de Acesso Total ao Disco
+    var sizeText: String { FileSizeFormatter.format(bytes) }
+}
 
 struct DSSpaceLensScreen: View {
     private let accent = SidebarItem.spaceLens.dsAccent
     @State private var scanning = false
-    @State private var blocks: [(String, UInt64, Color)] = []
+    @State private var entries: [SpaceEntry] = []
+    @State private var scanned = false
+
+    private var totalBytes: UInt64 { entries.reduce(0) { $0 + $1.bytes } }
+    private var maxBytes: UInt64 { entries.map(\.bytes).max() ?? 1 }
+    private var hasProtected: Bool { entries.contains { $0.protected } }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 14) {
             DSModuleHeader(title: SidebarItem.spaceLens.title,
                            subtitle: SidebarItem.spaceLens.dsSubtitle,
-                           buttonTitle: "Escanear",
+                           buttonTitle: scanning ? nil : "Escanear",
                            accent: accent) { scan() }
                 .reveal(delay: 0.02)
 
             if scanning {
                 VStack(spacing: 16) {
                     ProgressView().controlSize(.large).tint(accent)
-                    Text("Mapeando o disco…").font(.system(size: 13)).foregroundStyle(.white.opacity(0.55))
+                    Text("Medindo suas pastas de dados… isso pode levar um minuto.")
+                        .font(.system(size: 13)).foregroundStyle(.white.opacity(0.55))
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if !blocks.isEmpty {
-                treemap
-                    .padding(.horizontal, 30)
-                    .padding(.bottom, 26)
+            } else if !entries.isEmpty {
+                if hasProtected {
+                    fdaBanner.padding(.horizontal, 30).reveal(delay: 0.04)
+                }
+                infoBanner.padding(.horizontal, 30).reveal(delay: 0.06)
+                list
+            } else if scanned {
+                emptyState
             } else {
-                VStack(spacing: 14) {
-                    Image(systemName: "chart.pie")
-                        .font(.system(size: 40, weight: .ultraLight))
-                        .foregroundStyle(.white.opacity(0.35))
-                    Text("Clique em Escanear para visualizar o uso do disco")
-                        .font(.system(size: 13))
-                        .foregroundStyle(.white.opacity(0.5))
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                introState
             }
         }
     }
 
-    private var treemap: some View {
-        GeometryReader { geo in
-            let total = max(blocks.reduce(0) { $0 + $1.1 }, 1)
-            let top = Array(blocks.prefix(2))
-            let bottom = Array(blocks.dropFirst(2))
-            let topTotal = max(top.reduce(0) { $0 + $1.1 }, 1)
-            let bottomTotal = max(bottom.reduce(0) { $0 + $1.1 }, 1)
-
-            VStack(spacing: 6) {
-                HStack(spacing: 6) {
-                    ForEach(Array(top.enumerated()), id: \.offset) { i, b in
-                        DSTreemapBlock(name: b.0, bytes: b.1, color: b.2,
-                                       width: (geo.size.width - 12) * CGFloat(Double(b.1) / Double(topTotal)))
-                            .reveal(delay: Double(i) * 0.08)
-                    }
-                }
-                .frame(height: geo.size.height * CGFloat(Double(topTotal) / Double(total)))
-
-                HStack(spacing: 6) {
-                    ForEach(Array(bottom.enumerated()), id: \.offset) { i, b in
-                        DSTreemapBlock(name: b.0, bytes: b.1, color: b.2,
-                                       width: (geo.size.width - 18) * CGFloat(Double(b.1) / Double(bottomTotal)))
-                            .reveal(delay: 0.24 + Double(i) * 0.08)
-                    }
-                }
-                .frame(height: geo.size.height * CGFloat(Double(bottomTotal) / Double(total)))
+    // Algumas pastas (WhatsApp etc.) são protegidas pelo macOS: sem Acesso Total
+    // ao Disco, nem o app nem o próprio `du` conseguem medi-las ou limpá-las.
+    private var fdaBanner: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "lock.shield.fill")
+                .font(.system(size: 18)).foregroundStyle(.orange)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Algumas pastas grandes estão bloqueadas pela privacidade do macOS")
+                    .font(.system(size: 12.5, weight: .bold)).foregroundStyle(.white)
+                Text("Conceda **Acesso Total ao Disco** ao Cleaner para medir e revelar containers protegidos (como o WhatsApp). Depois, escaneie de novo.")
+                    .font(.system(size: 11.5)).foregroundStyle(.white.opacity(0.75))
             }
+            Spacer(minLength: 8)
+            Button {
+                PermissionManager.shared.openFullDiskAccessSettings()
+            } label: {
+                Text("Abrir Ajustes")
+                    .font(.system(size: 12, weight: .bold)).foregroundStyle(.black.opacity(0.85))
+                    .padding(.horizontal, 14).padding(.vertical, 8)
+                    .background(Capsule().fill(.orange))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(14)
+        .background(RoundedRectangle(cornerRadius: 12).fill(Color.orange.opacity(0.12)))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.orange.opacity(0.4), lineWidth: 1))
+    }
+
+    // Aviso honesto: isto é dado real, não lixo.
+    private var infoBanner: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "info.circle.fill")
+                .font(.system(size: 16)).foregroundStyle(accent)
+            Text("Isto são **dados reais dos seus apps**, não lixo. O Cleaner não apaga automaticamente — revise cada pasta e decida você mesmo. Comece pelas maiores.")
+                .font(.system(size: 12)).foregroundStyle(.white.opacity(0.8))
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .background(RoundedRectangle(cornerRadius: 12).fill(accent.opacity(0.12)))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(accent.opacity(0.35), lineWidth: 1))
+    }
+
+    private var list: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 10) {
+                ForEach(Array(entries.enumerated()), id: \.element.id) { i, entry in
+                    DSSpaceRow(entry: entry, maxBytes: maxBytes, accent: accent)
+                        .reveal(delay: 0.08 + Double(min(i, 8)) * 0.05)
+                }
+                HStack {
+                    Text("Total analisado")
+                        .font(.system(size: 12)).foregroundStyle(.white.opacity(0.55))
+                    Spacer()
+                    Text(FileSizeFormatter.format(totalBytes))
+                        .font(.system(size: 14, weight: .bold, design: .monospaced))
+                        .foregroundStyle(.white.opacity(0.85))
+                }
+                .padding(.horizontal, 6).padding(.top, 4)
+            }
+            .padding(.horizontal, 30).padding(.top, 6).padding(.bottom, 26)
         }
     }
+
+    private var introState: some View {
+        VStack(spacing: 14) {
+            Image(systemName: "chart.bar.doc.horizontal")
+                .font(.system(size: 40, weight: .ultraLight))
+                .foregroundStyle(.white.opacity(0.35))
+            Text("Clique em Escanear para descobrir quais apps ocupam\nseus \"Dados do Sistema\"")
+                .multilineTextAlignment(.center)
+                .font(.system(size: 13)).foregroundStyle(.white.opacity(0.5))
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 14) {
+            Image(systemName: "checkmark.seal.fill")
+                .font(.system(size: 44)).foregroundStyle(dsGreen)
+            Text("Nenhuma pasta de dados volumosa encontrada.")
+                .font(.system(size: 14)).foregroundStyle(.white.opacity(0.7))
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    // MARK: scan
 
     private func scan() {
         guard !scanning else { return }
         scanning = true
+        scanned = true
         Task.detached(priority: .userInitiated) {
-            let fm = FileManager.default
-            let home = MCConstants.home
-            let apps = dirSizeCapped(URL(filePath: "/Applications"))
-            let library = dirSizeCapped(home.appending(path: "Library"), maxFiles: 120_000)
-            var free: UInt64 = 0, total: UInt64 = 0
-            if let vals = try? URL(filePath: "/").resourceValues(forKeys: [.volumeTotalCapacityKey, .volumeAvailableCapacityForImportantUsageKey]) {
-                total = UInt64(vals.volumeTotalCapacity ?? 0)
-                free = UInt64(vals.volumeAvailableCapacityForImportantUsage ?? 0)
-            }
-            _ = fm
-            let used = total > free ? total - free : 0
-            let known = apps + library
-            let system = used > known ? used - known : 0
-            let result: [(String, UInt64, Color)] = [
-                ("Sistema e outros", system, Color(red: 0.35, green: 0.5, blue: 0.95)),
-                ("Aplicativos", apps, Color(red: 0.6, green: 0.45, blue: 0.95)),
-                ("Biblioteca do usuário", library, Color(red: 0.35, green: 0.8, blue: 0.7)),
-                ("Livre", free, Color(white: 0.5)),
-            ].filter { $0.1 > 0 }
+            let found = Self.analyze()
             await MainActor.run {
-                withAnimation(.spring) {
-                    blocks = result
+                withAnimation(.spring(duration: 0.5)) {
+                    entries = found
                     scanning = false
                 }
             }
         }
     }
+
+    /// Mede as pastas de dados de app dentro de ~/Library e ranqueia por tamanho.
+    /// Rodado fora do MainActor (Process + I/O de disco).
+    private nonisolated static func analyze() -> [SpaceEntry] {
+        let lib = MCConstants.home.appending(path: "Library")
+        // Pastas cujos FILHOS são dados por app (cada app = uma pasta).
+        let drillRoots: [(String, String)] = [
+            ("Application Support", "Dados de App"),
+            ("Group Containers", "Contêiner de grupo"),
+            ("Containers", "Contêiner"),
+        ]
+        let drillNames = Set(drillRoots.map(\.0))
+
+        var sized: [(url: URL, bytes: UInt64, kind: String)] = []
+        var blocked: [(url: URL, kind: String)] = []
+
+        func collect(root: URL, kind: String, skip: Set<String> = []) {
+            let r = Self.childSizes(of: root)
+            for (url, bytes) in r.sized where !skip.contains(url.lastPathComponent) {
+                sized.append((url, bytes, kind))
+            }
+            for url in r.blocked where !skip.contains(url.lastPathComponent) {
+                blocked.append((url, kind))
+            }
+        }
+
+        for (folder, kind) in drillRoots {
+            collect(root: lib.appending(path: folder), kind: kind)
+        }
+        // Demais itens de topo da Biblioteca (pnpm, Python, Caches…) como uma
+        // linha cada, sem detalhar — evita duplicar as pastas já detalhadas.
+        collect(root: lib, kind: "Biblioteca", skip: drillNames)
+
+        // Pastas protegidas de TERCEIROS (WhatsApp etc.) SEMPRE aparecem, mesmo
+        // sem tamanho — são justamente candidatas a maiores. Os containers de
+        // sistema da Apple (group.com.apple.*) são minúsculos e não acionáveis:
+        // filtramos para não poluir a lista. Apps conhecidos vêm primeiro; no
+        // máximo 12 para não virar uma parede de "bloqueada".
+        let protectedEntries: [SpaceEntry] = blocked
+            .filter { !Self.isSystemContainer($0.url.lastPathComponent) }
+            .map { item -> SpaceEntry in
+                let raw = item.url.lastPathComponent
+                return SpaceEntry(
+                    name: friendlyAppName(raw), url: item.url, bytes: 0, kind: item.kind,
+                    icon: appIcon(for: raw),
+                    hint: "Conceda Acesso Total ao Disco para medir e revelar esta pasta.",
+                    protected: true)
+            }
+            .sorted { a, b in
+                let ak = isKnownApp(a.url.lastPathComponent), bk = isKnownApp(b.url.lastPathComponent)
+                if ak != bk { return ak }          // apps conhecidos primeiro
+                return a.name.localizedCaseInsensitiveCompare(b.name) == .orderedAscending
+            }
+            .prefix(12)
+            .map { $0 }
+
+        // Itens mensuráveis: ≥ 50 MB, maior → menor.
+        let minBytes: UInt64 = 50 * 1024 * 1024
+        let sizedEntries: [SpaceEntry] = sized
+            .filter { $0.bytes >= minBytes }
+            .sorted { $0.bytes > $1.bytes }
+            .map { item in
+                let raw = item.url.lastPathComponent
+                return SpaceEntry(
+                    name: friendlyAppName(raw), url: item.url, bytes: item.bytes,
+                    kind: item.kind, icon: appIcon(for: raw), hint: appHint(for: raw))
+            }
+
+        return Array((protectedEntries + sizedEntries).prefix(60))
+    }
+
+    /// Container de sistema da Apple — protegido mas minúsculo e não acionável.
+    private nonisolated static func isSystemContainer(_ name: String) -> Bool {
+        let l = name.lowercased()
+        return l.contains("com.apple.") || l.contains("group.com.apple")
+            || l.contains("developer.apple") || l.contains("apple.wwdc")
+    }
+
+    /// Tamanho exato (em disco) de cada subpasta imediata de `root`, via `du -sk`
+    /// (uma chamada para todos os filhos — rápido e preciso, sem prompt de senha).
+    /// Subpastas que o macOS bloqueia por privacidade (TCC) não emitem tamanho no
+    /// stdout — nós as detectamos por ausência e devolvemos como `blocked`.
+    private nonisolated static func childSizes(
+        of root: URL
+    ) -> (sized: [(URL, UInt64)], blocked: [URL]) {
+        let fm = FileManager.default
+        guard let kids = try? fm.contentsOfDirectory(
+            at: root, includingPropertiesForKeys: [.isDirectoryKey],
+            options: [.skipsHiddenFiles]) else { return ([], []) }
+        let dirs = kids.filter {
+            (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
+        }
+        guard !dirs.isEmpty else { return ([], []) }
+
+        let p = Process()
+        p.executableURL = URL(filePath: "/usr/bin/du")
+        p.arguments = ["-sk"] + dirs.map { $0.path(percentEncoded: false) }
+        let out = Pipe()
+        p.standardOutput = out
+        p.standardError = Pipe()   // "Operation not permitted"/"Permission denied" descartados
+        guard (try? p.run()) != nil else { return ([], []) }
+        let data = out.fileHandleForReading.readDataToEndOfFile()
+        p.waitUntilExit()
+
+        var sized: [(URL, UInt64)] = []
+        var seen = Set<String>()
+        if let s = String(data: data, encoding: .utf8) {
+            for line in s.split(separator: "\n") {
+                let parts = line.split(separator: "\t", maxSplits: 1)
+                guard parts.count == 2,
+                      let kb = UInt64(parts[0].trimmingCharacters(in: .whitespaces)) else { continue }
+                let path = String(parts[1])
+                seen.insert(path)
+                sized.append((URL(filePath: path), kb * 1024))
+            }
+        }
+        // Filhos que existem mas não produziram tamanho = bloqueados pelo TCC.
+        let blocked = dirs.filter { !seen.contains($0.path(percentEncoded: false)) }
+        return (sized, blocked)
+    }
 }
 
-private struct DSTreemapBlock: View {
-    let name: String
-    let bytes: UInt64
-    let color: Color
-    let width: CGFloat
+/// Nomes bonitos para os apps mais comuns cujos identificadores (reverse-DNS ou
+/// com prefixo de Team ID) não dizem nada ao usuário. Chave = trecho procurado
+/// no nome bruto da pasta (minúsculo). Pura tabela — fácil de estender.
+private let spaceKnownApps: [(match: String, name: String, icon: String, hint: String?)] = [
+    ("whatsapp", "WhatsApp", "message.fill",
+     "Apague mídias grandes em WhatsApp › Ajustes › Armazenamento e dados."),
+    ("telegram", "Telegram", "paperplane.fill",
+     "Limpe o cache em Telegram › Ajustes › Dados e Armazenamento."),
+    ("docker", "Docker", "shippingbox.fill",
+     "Use a tarefa \"Recuperar Espaço do Docker\" na aba Manutenção."),
+    ("google.chrome", "Google Chrome", "globe", "Limpe os dados de navegação no próprio Chrome."),
+    ("google", "Google", "globe", nil),
+    ("brave", "Brave", "globe", "Limpe os dados de navegação no próprio Brave."),
+    ("openai.atlas", "OpenAI Atlas", "globe", nil),
+    ("discord", "Discord", "bubble.left.and.bubble.right.fill", nil),
+    ("spotify", "Spotify", "music.note", "Reduza o cache de músicas nos Ajustes do Spotify."),
+    ("minecraft", "Minecraft", "cube.fill", nil),
+    ("claude", "Claude", "sparkle", nil),
+    ("code", "VS Code", "chevron.left.forwardslash.chevron.right", nil),
+    ("slack", "Slack", "number", nil),
+    ("microsoft.excel", "Microsoft Excel", "tablecells", nil),
+    ("onedrive", "OneDrive", "cloud.fill", nil),
+    ("office", "Microsoft Office", "doc.fill", nil),
+    ("drivefs", "Google Drive", "cloud.fill", nil),
+    ("pnpm", "pnpm (Node)", "shippingbox", "Rode `pnpm store prune` no terminal."),
+    ("python", "Python", "chevron.left.forwardslash.chevron.right", nil),
+]
+
+/// Nome amigável a partir do nome bruto da pasta.
+func friendlyAppName(_ raw: String) -> String {
+    let lower = raw.lowercased()
+    if let hit = spaceKnownApps.first(where: { lower.contains($0.match) }) { return hit.name }
+    // Sem correspondência conhecida: descasca Team ID e reverse-DNS.
+    var s = raw
+    if let dot = s.firstIndex(of: "."),
+       s.distance(from: s.startIndex, to: dot) == 10,
+       s[..<dot].allSatisfy({ $0.isNumber || ($0.isLetter && $0.isUppercase) }) {
+        s = String(s[s.index(after: dot)...])
+    }
+    if s.hasPrefix("group.") { s = String(s.dropFirst(6)) }
+    let noise: Set<String> = ["com", "net", "org", "io", "co", "ru", "us", "app",
+                              "shared", "mac", "macos", "group", "suite"]
+    let parts = s.split(separator: ".").map(String.init)
+    if parts.count >= 2, noise.contains(parts[0].lowercased()) {
+        for c in parts.reversed() where !noise.contains(c.lowercased()) {
+            return c.prefix(1).uppercased() + c.dropFirst()
+        }
+    }
+    return s
+}
+
+private func appIcon(for raw: String) -> String {
+    let lower = raw.lowercased()
+    if let hit = spaceKnownApps.first(where: { lower.contains($0.match) }) { return hit.icon }
+    return "folder.fill"
+}
+
+/// True se o nome bruto casa com um app conhecido da tabela.
+func isKnownApp(_ raw: String) -> Bool {
+    let lower = raw.lowercased()
+    return spaceKnownApps.contains { lower.contains($0.match) }
+}
+
+private func appHint(for raw: String) -> String? {
+    let lower = raw.lowercased()
+    return spaceKnownApps.first(where: { lower.contains($0.match) })?.hint
+}
+
+/// Uma linha do analisador: app, tamanho, barra proporcional e "Mostrar no Finder".
+private struct DSSpaceRow: View {
+    let entry: SpaceEntry
+    let maxBytes: UInt64
+    let accent: Color
     @State private var hovering = false
 
+    private var fraction: Double {
+        maxBytes > 0 ? Double(entry.bytes) / Double(maxBytes) : 0
+    }
+
     var body: some View {
-        RoundedRectangle(cornerRadius: 12, style: .continuous)
-            .fill(LinearGradient(colors: [color.opacity(0.9), color.opacity(0.6)],
-                                 startPoint: .topLeading, endPoint: .bottomTrailing))
-            .overlay(RoundedRectangle(cornerRadius: 12)
-                .strokeBorder(.white.opacity(hovering ? 0.5 : 0.15), lineWidth: 1))
-            .overlay(
-                VStack(spacing: 2) {
-                    Text(name)
-                        .font(.system(size: 12, weight: .bold))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.6)
-                    Text(FileSizeFormatter.format(bytes))
-                        .font(.system(size: 10.5, design: .monospaced))
-                        .opacity(0.85)
+        HStack(spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10, style: .continuous).fill(accent.opacity(0.14))
+                Image(systemName: entry.icon).font(.system(size: 16)).foregroundStyle(accent)
+            }
+            .frame(width: 40, height: 40)
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    Text(entry.name).font(.system(size: 14, weight: .bold)).foregroundStyle(.white)
+                    Text(entry.kind.uppercased())
+                        .font(.system(size: 8.5, weight: .heavy)).kerning(0.5)
+                        .foregroundStyle(accent)
+                        .padding(.horizontal, 7).padding(.vertical, 3)
+                        .background(Capsule().fill(accent.opacity(0.16)))
                 }
-                .foregroundStyle(.white)
-                .padding(4))
-            .frame(width: max(52, width))
-            .shadow(color: color.opacity(hovering ? 0.6 : 0.25), radius: hovering ? 14 : 6, y: 3)
-            .tilt3D(maxAngle: 10)
-            .scaleEffect(hovering ? 1.02 : 1)
-            .animation(.spring(duration: 0.25), value: hovering)
-            .onHover { hovering = $0 }
+                // Barra proporcional ao maior item.
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(.white.opacity(0.08))
+                        Capsule().fill(LinearGradient(colors: [accent, accent.opacity(0.6)],
+                                                      startPoint: .leading, endPoint: .trailing))
+                            .frame(width: max(6, geo.size.width * fraction))
+                    }
+                }
+                .frame(height: 5)
+                if let hint = entry.hint {
+                    Text(hint).font(.system(size: 11)).foregroundStyle(.white.opacity(0.5)).lineLimit(1)
+                }
+            }
+
+            Spacer(minLength: 8)
+
+            if entry.protected {
+                Text("bloqueada")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.orange.opacity(0.9))
+                Button {
+                    PermissionManager.shared.openFullDiskAccessSettings()
+                } label: {
+                    Label("Conceder acesso", systemImage: "lock.open")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.black.opacity(0.8))
+                        .padding(.horizontal, 12).padding(.vertical, 7)
+                        .background(Capsule().fill(.orange.opacity(hovering ? 1 : 0.85)))
+                }
+                .buttonStyle(.plain)
+                .help("Abrir Ajustes › Privacidade › Acesso Total ao Disco")
+            } else {
+                Text(entry.sizeText)
+                    .font(.system(size: 15, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(.white)
+
+                Button {
+                    NSWorkspace.shared.activateFileViewerSelecting([entry.url])
+                } label: {
+                    Label("Mostrar", systemImage: "arrow.up.forward.app")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.85))
+                        .padding(.horizontal, 12).padding(.vertical, 7)
+                        .background(Capsule().fill(.white.opacity(hovering ? 0.16 : 0.08)))
+                }
+                .buttonStyle(.plain)
+                .help("Revelar no Finder para revisar ou remover manualmente")
+            }
+        }
+        .padding(.horizontal, 16).padding(.vertical, 12)
+        .glassCard(hoverLift: false)
+        .onHover { hovering = $0 }
     }
 }
 

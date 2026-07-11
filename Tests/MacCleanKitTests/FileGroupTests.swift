@@ -14,38 +14,53 @@ final class FileGroupTests: XCTestCase {
 
     // MARK: - fileTypeLabel
 
+    // Labels are localized (PT/ZH), so these tests assert the GROUPING logic —
+    // extensions of the same kind share one label, distinct from other kinds —
+    // rather than hardcoding a language's display string (which rots on
+    // translation). `other` is the "Outros/其他/Other" bucket for reference.
+    private var otherLabel: String { FileGroup.fileTypeLabel("xyz") }
+
     func testVideoTypesLabeledVideos() {
+        let video = FileGroup.fileTypeLabel("mp4")
+        XCTAssertNotEqual(video, otherLabel, "video must not fall into the 'Other' bucket")
         for ext in ["mp4", "mov", "avi", "mkv"] {
-            XCTAssertEqual(FileGroup.fileTypeLabel(ext), "Videos", "extension '\(ext)' should be Videos")
+            XCTAssertEqual(FileGroup.fileTypeLabel(ext), video, "extension '\(ext)' should share the video label")
         }
     }
 
     func testAudioTypesLabeledAudio() {
+        let audio = FileGroup.fileTypeLabel("mp3")
+        XCTAssertNotEqual(audio, otherLabel)
         for ext in ["mp3", "wav", "flac", "aac"] {
-            XCTAssertEqual(FileGroup.fileTypeLabel(ext), "Audio")
+            XCTAssertEqual(FileGroup.fileTypeLabel(ext), audio)
         }
     }
 
     func testImageTypesLabeledImages() {
+        let image = FileGroup.fileTypeLabel("jpg")
+        XCTAssertNotEqual(image, otherLabel)
         for ext in ["jpg", "jpeg", "png", "heic"] {
-            XCTAssertEqual(FileGroup.fileTypeLabel(ext), "Images")
+            XCTAssertEqual(FileGroup.fileTypeLabel(ext), image)
         }
     }
 
     func testUnknownTypeIsOther() {
-        XCTAssertEqual(FileGroup.fileTypeLabel("xyz"), "Other")
-        XCTAssertEqual(FileGroup.fileTypeLabel(""), "Other")
+        XCTAssertEqual(FileGroup.fileTypeLabel(""), otherLabel)
+        // Unknown must not collide with any known category.
+        XCTAssertNotEqual(otherLabel, FileGroup.fileTypeLabel("mp4"))
+        XCTAssertNotEqual(otherLabel, FileGroup.fileTypeLabel("pdf"))
     }
 
     // MARK: - ageLabel
 
     func testAgeLabels() {
-        XCTAssertEqual(FileGroup.ageLabel(days: 0), "Last month")
-        XCTAssertEqual(FileGroup.ageLabel(days: 25), "Last month")
-        XCTAssertEqual(FileGroup.ageLabel(days: 31), "1 - 3 months")
-        XCTAssertEqual(FileGroup.ageLabel(days: 91), "3 - 6 months")
-        XCTAssertEqual(FileGroup.ageLabel(days: 181), "6 months - 1 year")
-        XCTAssertEqual(FileGroup.ageLabel(days: 400), "Over 1 year")
+        // Same bucket within the first month; distinct, ordered buckets across
+        // each boundary. Language-agnostic — asserts the bucketing, not the copy.
+        XCTAssertEqual(FileGroup.ageLabel(days: 0), FileGroup.ageLabel(days: 25))
+        XCTAssertNotEqual(FileGroup.ageLabel(days: 25), FileGroup.ageLabel(days: 31),
+                          "the 30-day boundary must change bucket")
+        let buckets = [0, 31, 91, 181, 400].map { FileGroup.ageLabel(days: $0) }
+        XCTAssertEqual(Set(buckets).count, buckets.count, "each age range must have a distinct label")
     }
 
     // MARK: - group by size
@@ -85,9 +100,9 @@ final class FileGroupTests: XCTestCase {
         ]
         let groups = FileGroup.byType.group(files)
         let dict = Dictionary(uniqueKeysWithValues: groups.map { ($0.0, $0.1.count) })
-        XCTAssertEqual(dict["Videos"], 2)
-        XCTAssertEqual(dict["Audio"], 1)
-        XCTAssertEqual(dict["PDFs"], 1)
+        XCTAssertEqual(dict[FileGroup.fileTypeLabel("mp4")], 2)
+        XCTAssertEqual(dict[FileGroup.fileTypeLabel("mp3")], 1)
+        XCTAssertEqual(dict[FileGroup.fileTypeLabel("pdf")], 1)
     }
 
     // MARK: - group by age
@@ -96,14 +111,14 @@ final class FileGroupTests: XCTestCase {
         let now = Date()
         let recent = makeFile("recent.txt", mod: now.addingTimeInterval(-3 * 24 * 3600))
         let groups = FileGroup.byAge.group([recent], now: now)
-        XCTAssertTrue(groups.contains(where: { $0.0 == "Last month" }))
+        XCTAssertTrue(groups.contains(where: { $0.0 == FileGroup.ageLabel(days: 3) }))
     }
 
     func testGroupByAge_oldFile() {
         let now = Date()
         let old = makeFile("old.txt", mod: now.addingTimeInterval(-400 * 24 * 3600))
         let groups = FileGroup.byAge.group([old], now: now)
-        XCTAssertTrue(groups.contains(where: { $0.0 == "Over 1 year" }))
+        XCTAssertTrue(groups.contains(where: { $0.0 == FileGroup.ageLabel(days: 400) }))
     }
 
     func testGroupByAge_skipsFilesWithoutModDate() {

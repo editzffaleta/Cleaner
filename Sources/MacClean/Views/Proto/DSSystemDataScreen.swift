@@ -235,17 +235,29 @@ struct DSSystemDataScreen: View {
         Task {
             var freed: UInt64 = 0
             if !fileResults.isEmpty {
+                // `.permanent`: apaga de fato (não move para a Lixeira). Aqui o
+                // objetivo é LIBERAR espaço na hora — trashItem só moveria os
+                // bytes para ~/.Trash no mesmo volume, sem liberar nada até
+                // esvaziar a Lixeira. O SafetyGuard do motor segue protegendo
+                // caminhos de sistema. `r.freedBytes` passa a ser espaço real.
                 let r = await CleanActions.executeUserClean(
                     results: fileResults, selectedItems: fileURLs, engine: engine,
-                    source: CleanHistorySource.systemJunk,
+                    source: CleanHistorySource.systemJunk, defaultMode: .permanent,
                     onProgress: { p in Task { @MainActor in cleanProgress = max(cleanProgress, p.fraction * 0.6) } })
                 freed += r.freedBytes
             }
             // Snapshots do Time Machine via MaintenanceExecutor (pede senha de admin).
-            if let snap = snapshotItem {
+            // Creditamos o espaço REALMENTE liberado (delta de capacidade livre
+            // antes/depois), não a estimativa `snap.bytes` — `tmutil` retorna
+            // sucesso mesmo quando não remove nada.
+            if snapshotItem != nil {
                 await MainActor.run { cleanProgress = max(cleanProgress, 0.65) }
+                let before = Self.availableBytes()
                 let result = await MaintenanceExecutor().execute(.thinTimeMachineSnapshots)
-                if result.success { freed += snap.bytes }
+                if result.success {
+                    let after = Self.availableBytes()
+                    freed += after > before ? after - before : 0
+                }
             }
             await MainActor.run {
                 cleanProgress = 1
@@ -257,6 +269,15 @@ struct DSSystemDataScreen: View {
     }
 
     // MARK: helpers
+
+    /// Capacidade livre REAL do volume raiz, em bytes. Usada para medir o
+    /// espaço efetivamente liberado ao reduzir snapshots.
+    private static func availableBytes() -> UInt64 {
+        if let v = try? URL(filePath: "/").resourceValues(forKeys: [.volumeAvailableCapacityKey]) {
+            return UInt64(v.volumeAvailableCapacity ?? 0)
+        }
+        return 0
+    }
 
     /// Espaço purgável (majoritariamente snapshots locais) + contagem de snapshots.
     private static func measureSnapshots() async -> (bytes: UInt64, count: Int) {

@@ -38,6 +38,17 @@ O **Cleaner** é um app **gratuito e de código aberto** para macOS que limpa ar
 
 Toda a interface está em **Português do Brasil**. Você pode trocar o idioma quando quiser em **Ajustes → Idioma da Interface**; por padrão, o app segue o idioma do sistema.
 
+## Novidades
+
+> Todas as versões e downloads estão na página de [**Releases**](https://github.com/editzffaleta/Cleaner/releases).
+
+### v1.16.0
+- **Dados do Sistema** — recupera o espaço da categoria "Dados do Sistema" do macOS (caches, logs, backups de iOS, lixo do Xcode, atualizações antigas, imagens de disco e snapshots do Time Machine). A limpeza agora **exclui permanentemente e libera o disco na hora**, e mostra o espaço **realmente** recuperado (antes os itens iam para a Lixeira, sem liberar armazenamento até esvaziá-la).
+- **Lente de Espaço** virou um analisador de verdade de "onde meu espaço foi parar": mede as pastas de dados dos seus apps (WhatsApp, navegadores, Docker, VMs…), ranqueia da maior para a menor e revela cada uma no Finder. Detecta containers protegidos pela privacidade do macOS (TCC) e guia você a conceder **Acesso Total ao Disco** — deixando claro que são dados reais, não lixo (nunca apaga sozinho).
+- Ajustes internos de concorrência (Swift 6) e correção da suíte de testes.
+
+> ℹ️ O DMG do v1.16.0 **não é assinado/notarizado**: na primeira abertura, use **botão direito no Cleaner → Abrir** para passar pelo Gatekeeper.
+
 ## Recursos
 
 ### Limpeza
@@ -45,6 +56,7 @@ Toda a interface está em **Português do Brasil**. Você pode trocar o idioma q
 |--------|-----------|
 | **Escaneamento Inteligente** | Escaneamento com um clique que combina limpeza, proteção e análise de desempenho, com progresso ao vivo em 13 módulos |
 | **Lixo do Sistema** | 16 categorias de escaneamento — caches de usuário/sistema, logs, arquivos de idioma, preferências corrompidas, itens de início quebrados, versões de documentos, backups de iOS, lixo do Xcode, **redução de Binários Universais** (detecta binários Mach-O "gordos" com fatias arm64 e x86_64 e os reescreve para a sua arquitetura nativa via `lipo`), usuários excluídos e muito mais |
+| **Dados do Sistema** | Recupera o espaço da categoria "Dados do Sistema" do macOS — caches, logs, backups de iOS, lixo do Xcode, atualizações antigas, imagens de disco e snapshots locais do Time Machine. Apaga permanentemente para liberar o disco de imediato |
 | **Anexos do Mail** | Encontra anexos em cache do Apple Mail, Outlook e Spark |
 | **Lixeiras** | Esvazia a Lixeira de todos os locais, inclusive de discos externos |
 
@@ -69,7 +81,7 @@ Toda a interface está em **Português do Brasil**. Você pode trocar o idioma q
 ### Arquivos
 | Módulo | Descrição |
 |--------|-----------|
-| **Lente de Espaço** | Visualização em treemap do uso do disco, com navegação por níveis |
+| **Lente de Espaço** | Analisador de "Dados do Sistema": mede com precisão as pastas de dados dos seus apps (WhatsApp, navegadores, Docker, VMs…), ranqueia da maior para a menor e revela cada uma no Finder. Detecta containers protegidos por privacidade (TCC) e guia a concessão de Acesso Total ao Disco |
 | **Arquivos Grandes e Antigos** | Encontra arquivos maiores que 50 MB, ordenados por tamanho e data do último acesso |
 | **Duplicatas** | Detecção progressiva — agrupamento por tamanho → SHA-256 parcial (4 KB) → hash completo → verificação por inode |
 | **Triturador** | Apagamento seguro de arquivos, com modos padrão, permanente e de sobrescrita segura |

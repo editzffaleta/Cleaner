@@ -108,11 +108,12 @@ final class MaintenanceTaskTests: XCTestCase {
         // The dangerous ones must explicitly call out the duration of impact,
         // not just the action. Users don't know what "rebuild Launch Services"
         // means; they need "your double-clicks will fail for hours".
+        // Localized copy (PT/EN): accept either language's word for "hours".
         let lsCopy = MaintenanceTask.rebuildLaunchServices.sideEffects.lowercased()
-        XCTAssertTrue(lsCopy.contains("hour"),
+        XCTAssertTrue(lsCopy.contains("hour") || lsCopy.contains("hora"),
                       "Rebuild Launch Services side-effect text must mention time-to-recover")
         let spotlightCopy = MaintenanceTask.reindexSpotlight.sideEffects.lowercased()
-        XCTAssertTrue(spotlightCopy.contains("hour") || spotlightCopy.contains("longer"),
+        XCTAssertTrue(spotlightCopy.contains("hour") || spotlightCopy.contains("hora") || spotlightCopy.contains("longer"),
                       "Reindex Spotlight side-effect text must mention time-to-recover")
     }
 

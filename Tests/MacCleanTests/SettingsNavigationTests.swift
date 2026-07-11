@@ -17,7 +17,7 @@ final class SettingsNavigationTests: XCTestCase {
 
     /// Existing module rows must be unaffected by the items filter.
     func testExistingSectionsStillListTheirItems() {
-        XCTAssertEqual(SidebarSection.main.items, [.smartScan])
+        XCTAssertEqual(SidebarSection.main.items, [.home, .smartScan])
         XCTAssertTrue(SidebarSection.cleanup.items.contains(.systemJunk))
         XCTAssertTrue(SidebarSection.files.items.contains(.shredder))
     }

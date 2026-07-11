@@ -646,20 +646,29 @@ struct DSScanButton: View {
 
         // progresso irregular; segura em 93% até o trabalho real terminar
         timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: 0.06, repeats: true) { t in
-            let step = Double.random(in: 0.004...0.028)
-            let cap = workDone ? 1.0 : 0.93
-            progress = min(cap, progress + step)
-            if progress >= 1 {
-                t.invalidate()
-                withAnimation(.spring(duration: 0.5)) { phase = .done }
-                NSSound(named: "Glass")?.play()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
-                    onComplete()
-                    withAnimation(.easeOut(duration: 0.5)) {
-                        phase = .idle
-                        scanning = false
-                        ripple = false
+        timer = Timer.scheduledTimer(withTimeInterval: 0.06, repeats: true) { _ in
+            // A Timer scheduled on the main run loop always fires on the main
+            // thread, but its closure is typed `@Sendable` (no actor
+            // association), so under strict Swift 6 concurrency it can't touch
+            // the @MainActor view state directly. Assert the isolation we know
+            // holds at runtime. We invalidate via the stored `timer` (same
+            // object) rather than the closure's `t` param, so no non-Sendable
+            // value is sent across the isolation boundary.
+            MainActor.assumeIsolated {
+                let step = Double.random(in: 0.004...0.028)
+                let cap = workDone ? 1.0 : 0.93
+                progress = min(cap, progress + step)
+                if progress >= 1 {
+                    timer?.invalidate()
+                    withAnimation(.spring(duration: 0.5)) { phase = .done }
+                    NSSound(named: "Glass")?.play()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
+                        onComplete()
+                        withAnimation(.easeOut(duration: 0.5)) {
+                            phase = .idle
+                            scanning = false
+                            ripple = false
+                        }
                     }
                 }
             }

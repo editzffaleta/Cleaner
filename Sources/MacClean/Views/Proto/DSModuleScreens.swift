@@ -24,7 +24,7 @@ extension SidebarItem {
         case .maintenance: return "Execute scripts de manutenção e reindexações do sistema"
         case .uninstaller: return "Remova aplicativos completamente, sem deixar restos"
         case .updater: return "Mantenha seus aplicativos sempre atualizados"
-        case .spaceLens: return "Visualize o uso do disco e encontre pastas volumosas"
+        case .spaceLens: return "Veja onde os GB de \"Dados do Sistema\" foram parar:\nas pastas de dados dos seus apps, do maior ao menor"
         case .largeOldFiles: return "Encontre arquivos grandes e antigos esquecidos no disco"
         case .duplicates: return "Localize arquivos duplicados e cópias semelhantes"
         case .shredder: return "Apague arquivos de forma segura e irrecuperável"

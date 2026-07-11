@@ -33,12 +33,22 @@ public enum CleanActions {
     ///     Trash means actually removing them.
     ///   - everything else goes through `engine.clean(..., .trash)` so it stays
     ///     recoverable from the Trash.
+    ///
+    /// `defaultMode` controls how the "everything else" bucket is removed.
+    /// It defaults to `.trash` (recoverable) — the safe default every module
+    /// relies on. The System Data screen passes `.permanent` on purpose: its
+    /// whole point is to RECLAIM disk space immediately, and trashing merely
+    /// moves the bytes to ~/.Trash on the same volume (freeing nothing until
+    /// the Trash is emptied), which is exactly the "cleaned but no space freed"
+    /// complaint. `.trashBins` items are always `.permanent` regardless (they
+    /// already live in the Trash); `.universalBinaries` are always thinned.
     @discardableResult
     public static func executeUserClean(
         results: [ScanResult],
         selectedItems: Set<URL>,
         engine: CleaningEngine,
         source: String = CleanHistorySource.manual,
+        defaultMode: CleaningEngine.CleanMode = .trash,
         onProgress: (@Sendable (CleaningEngine.Progress) -> Void)? = nil
     ) async -> CleaningEngine.CleanResult {
         var trashItems: [FileItem] = []
@@ -74,7 +84,7 @@ public enum CleanActions {
         // Bins view is all `.trashBins`; every other view has none), so at
         // most one of these two engine calls does real work — wiring
         // onProgress to both is safe and never double-drives the bar.
-        let trashResult = await engine.clean(items: dedupedTrashItems, mode: .trash,
+        let trashResult = await engine.clean(items: dedupedTrashItems, mode: defaultMode,
                                              onProgress: onProgress)
         let permanentResult = await engine.clean(items: dedupedPermanentItems, mode: .permanent,
                                                  onProgress: onProgress)

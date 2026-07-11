@@ -93,6 +93,46 @@ final class CleanActionsTests: XCTestCase {
         XCTAssertTrue(result.errors.isEmpty)
     }
 
+    // MARK: - System Data: `.permanent` frees space immediately
+    //
+    // Bug (July 2026): "cleans but doesn't free storage." The System Data
+    // screen routed caches/logs through the default `.trash` mode, which
+    // moves the bytes to ~/.Trash on the SAME volume — freeing nothing until
+    // the user empties the Trash. Passing `defaultMode: .permanent` deletes
+    // for real, so the space is reclaimed at once.
+    //
+    // SPEC: `defaultMode: .permanent` removes selected files with an accurate
+    // report, and never leaves a recoverable copy in ~/.Trash.
+
+    func testDefaultModePermanent_deletesForRealNotToTrash() async throws {
+        let (url, item) = try writeReal("system-data.cache", size: 512)
+        let trashBefore = try? FileManager.default.contentsOfDirectory(
+            at: MCConstants.userTrash, includingPropertiesForKeys: nil)
+
+        XCTAssertTrue(exists(url))
+
+        let result = await CleanActions.executeUserClean(
+            results: [ScanResult(category: .userCaches, items: [item])],
+            selectedItems: [url],
+            engine: CleaningEngine(),
+            defaultMode: .permanent
+        )
+
+        XCTAssertFalse(exists(url), "permanent clean must remove the file from disk")
+        XCTAssertEqual(result.removedCount, 1)
+        XCTAssertEqual(result.freedBytes, 512)
+        XCTAssertTrue(result.errors.isEmpty)
+
+        // The file must NOT have landed in the Trash (that would free nothing).
+        let trashAfter = try? FileManager.default.contentsOfDirectory(
+            at: MCConstants.userTrash, includingPropertiesForKeys: nil)
+        let newlyInTrash = (trashAfter ?? []).filter { url in
+            !(trashBefore ?? []).contains(url) && url.lastPathComponent.contains("system-data")
+        }
+        XCTAssertTrue(newlyInTrash.isEmpty,
+            "permanent clean must not leave a recoverable copy in ~/.Trash")
+    }
+
     // MARK: - Trash Bins: emptying must PERMANENTLY delete, not re-trash
     //
     // Bug (June 2026): TrashBins scan items already live in ~/.Trash.
